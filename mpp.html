@@ -1,0 +1,2634 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer" />
+        <meta name="theme-color" content="#f2f2f7" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta
+            name="apple-mobile-web-app-status-bar-style"
+            content="black-translucent"
+        />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
+        />
+        <title>MAppEwi</title>
+        <style>
+            /* Cho phép --tint-rgb chuyển màu mượt khi đổi bài */
+            @property --tint-rgb {
+              syntax: "<number>#";
+              inherits: true;
+              initial-value: 232, 228, 239;
+            }
+            @property --bg-top  { syntax: "<number>#"; inherits: true; initial-value: 110, 120, 170; }
+            @property --bg-edge { syntax: "<number>#"; inherits: true; initial-value: 130, 140, 190; }
+            @property --bg-mid  { syntax: "<number>#"; inherits: true; initial-value: 170, 180, 225; }
+            @property --glow1   { syntax: "<number>#"; inherits: true; initial-value: 190, 195, 230; }
+            @property --glow2   { syntax: "<number>#"; inherits: true; initial-value: 200, 190, 230; }
+
+            :root {
+              --bg: #f2f2f7;
+              --bg2: #e5e5ea;
+              --surface: #ffffff;
+              --surface2: #f5f5f7;
+              --text: #1c1c1e;
+              --sub: #6e6e73;
+              --muted: #8e8e93;
+              --accent: #ff2d55;
+              --accent2: #bf5af2;
+              --green: #30d158;
+              --track: rgba(0,0,0,.12);
+              --glass: rgba(255,255,255,.85);
+              --shadow: 0 12px 40px rgba(0,0,0,.12);
+              color-scheme: light;
+            }
+
+            *, *::before, *::after { box-sizing: border-box; }
+            html, body { height: 100%; height: 100dvh; margin: 0; }
+            body {
+              background: var(--bg);
+              color: var(--text);
+              font-family: -apple-system, "SF Pro Display", "PingFang SC", "Noto Sans SC", "Segoe UI", system-ui, sans-serif;
+              -webkit-font-smoothing: antialiased;
+              -webkit-tap-highlight-color: transparent;
+              overflow: hidden;
+              user-select: none;
+              transition: background-color .6s ease;
+            }
+            button {
+              background: none; border: 0; color: inherit; padding: 0;
+              cursor: pointer; font: inherit; -webkit-appearance: none;
+            }
+            [hidden] { display: none !important; }
+            svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+            img { display: block; max-width: 100%; }
+
+            .app {
+              position: relative;
+              height: 100%;
+              height: 100dvh;
+              max-width: 430px;
+              margin: 0 auto;
+              overflow: hidden;
+              background: var(--bg);
+            }
+
+            /* ========== HOME ========== */
+            .home {
+              position: absolute; inset: 0;
+              --tabh: calc(56px + env(safe-area-inset-bottom, 0px));
+              padding-top: env(safe-area-inset-top, 0px);
+              display: flex; flex-direction: column;
+              transition: transform .5s cubic-bezier(.32,.72,0,1), opacity .4s;
+            }
+            .app.show .home {
+              transform: scale(.94) translateY(-8px);
+              opacity: .35;
+              pointer-events: none;
+            }
+
+            /* Thanh điều hướng dưới cùng: Tôi / Tìm nhạc / Tra từ (chỉ icon) */
+            .tabbar {
+              position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+              height: var(--tabh); padding-bottom: env(safe-area-inset-bottom, 0px);
+              background: var(--glass);
+              backdrop-filter: blur(24px) saturate(180%);
+              -webkit-backdrop-filter: blur(24px) saturate(180%);
+            }
+            .tabs { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); height: 56px; }
+            .tp {
+              position: absolute; left: 0; top: 11px; width: calc(100% / 3); height: 34px;
+              pointer-events: none; transition: transform .4s cubic-bezier(.32,.72,0,1);
+            }
+            .tp::before {
+              content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+              width: 64px; margin-left: -32px; border-radius: 17px;
+              background: rgba(255,45,85,.12);
+            }
+            .tabs[data-p="1"] .tp { transform: translateX(100%); }
+            .tabs[data-p="2"] .tp { transform: translateX(200%); }
+            .tab {
+              position: relative; display: grid; place-items: center;
+              color: var(--muted); transition: color .25s, transform .18s;
+            }
+            .tab svg { width: 26px; height: 26px; transition: stroke-width .2s; }
+            .tab:active { transform: scale(.88); }
+            .tab.on { color: var(--accent); }
+            .tab.on svg { stroke-width: 2.1; }
+
+            .sbox {
+              display: flex; align-items: center; gap: 10px;
+              margin: 14px 20px 8px; padding: 0 14px;
+              height: 44px; border-radius: 12px;
+              background: var(--surface2);
+            }
+            .sbox svg { width: 18px; height: 18px; flex: none; color: var(--muted); }
+            .sbox input {
+              flex: 1; min-width: 0; background: none; border: 0; outline: 0;
+              color: var(--text); font: inherit; font-size: 16px;
+            }
+            .sbox input::placeholder { color: var(--muted); }
+            .sbox button { width: 28px; height: 28px; display: grid; place-items: center; color: var(--muted); }
+
+            .hbody {
+              flex: 1; min-height: 0; overflow-y: auto;
+              padding: 4px 0 calc(150px + env(safe-area-inset-bottom, 0px));
+              -webkit-overflow-scrolling: touch;
+            }
+            .sh {
+              padding: 18px 20px 8px;
+              font-weight: 700; font-size: 18px;
+              display: flex; align-items: baseline; gap: 8px;
+            }
+            .sh small { color: var(--sub); font-weight: 500; font-size: 13px; }
+
+            .cards {
+              display: flex; gap: 12px; overflow-x: auto;
+              padding: 4px 20px 12px;
+              scrollbar-width: none;
+            }
+            .cards::-webkit-scrollbar { display: none; }
+
+            .pc {
+              flex: none; width: 140px; height: 140px;
+              border-radius: 14px; padding: 14px;
+              text-align: left; display: flex; flex-direction: column;
+              justify-content: flex-end; gap: 3px;
+              position: relative; overflow: hidden;
+              transition: transform .18s;
+              box-shadow: 0 4px 16px rgba(0,0,0,.12);
+            }
+            .pc::after {
+              content: ""; position: absolute; inset: 0;
+              background: linear-gradient(to top, rgba(0,0,0,.45) 0%, transparent 55%);
+              pointer-events: none;
+            }
+            .pc:active { transform: scale(.96); }
+            .pc b, .pc small { position: relative; z-index: 1; }
+            .pc b { font-size: 15px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .pc small { color: rgba(255,255,255,.8); font-size: 12px; }
+            .pc.new {
+              background: var(--surface2) !important;
+              align-items: center; justify-content: center;
+              box-shadow: none; border: 1.5px dashed var(--track);
+            }
+            .pc.new::after { display: none; }
+            .pc.new b { font-size: 28px; font-weight: 300; color: var(--sub); }
+            .pc.new small { color: var(--sub); }
+
+            .pc-wrap {
+              position: relative; flex: none; width: 140px; height: 140px;
+            }
+            .pc-wrap .pc { width: 100%; height: 100%; }
+            .pc-del {
+              position: absolute; top: 6px; right: 6px; z-index: 3;
+              width: 28px; height: 28px; border-radius: 50%;
+              background: rgba(0,0,0,.45); color: #fff;
+              font-size: 18px; line-height: 1; font-weight: 400;
+              display: grid; place-items: center;
+              backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+              opacity: .85; transition: opacity .15s, transform .15s, background .15s;
+            }
+            .pc-del:active { opacity: 1; transform: scale(.9); background: #ff2d55; }
+
+            .vocab-hint {
+              padding: 48px 28px; text-align: center; color: var(--sub);
+              font-size: 14px; line-height: 1.55;
+            }
+            .vocab-hint b { display: block; color: var(--text); font-size: 16px; margin-bottom: 6px; }
+            .vocab-hint em { font-style: normal; color: var(--accent2); font-weight: 500; }
+            .vocab-hint-ico {
+              width: 56px; height: 56px; margin: 0 auto 14px;
+              border-radius: 16px; background: var(--surface2);
+              display: grid; place-items: center;
+              font-size: 26px; font-weight: 600; color: var(--accent2);
+            }
+            .home-vlist { padding: 4px 20px 24px; }
+            .home-vlist .vhead {
+              position: sticky; top: 0; background: var(--bg); z-index: 1;
+            }
+
+            .row {
+              display: flex; align-items: center; gap: 14px;
+              padding: 10px 20px; cursor: pointer;
+              transition: background .15s;
+            }
+            .row:active { background: var(--surface2); }
+            .row.cur { background: var(--surface2); }
+            .row-cover {
+              width: 48px; height: 48px; border-radius: 8px; flex: none;
+              box-shadow: 0 2px 8px rgba(0,0,0,.1);
+              object-fit: cover; background: var(--surface2);
+            }
+            .row-info { flex: 1; min-width: 0; }
+            .row-info b {
+              display: block; font-size: 15px; font-weight: 500;
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            }
+            .row-info small { color: var(--sub); font-size: 13px; }
+            .row-dur { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+            .empty { padding: 32px 24px; text-align: center; color: var(--sub); font-size: 14px; line-height: 1.5; }
+
+            /* Mini player */
+            .mini {
+              position: absolute; left: 0; right: 0; bottom: var(--tabh);
+              height: 64px; display: flex; align-items: center; gap: 12px;
+              padding: 0 12px; border-radius: 20px 20px 0 0;
+              background: var(--glass); backdrop-filter: blur(24px) saturate(180%);
+              -webkit-backdrop-filter: blur(24px) saturate(180%);
+              box-shadow: var(--shadow);
+              cursor: pointer; z-index: 2; overflow: hidden;
+              border: 0; border-top: 1px solid rgba(0,0,0,.06); border-bottom: 1px solid rgba(0,0,0,.05);
+            }
+            .mc {
+              width: 48px; height: 48px; border-radius: 10px; flex: none;
+              box-shadow: 0 2px 8px rgba(0,0,0,.12);
+              object-fit: cover; background: var(--surface2);
+            }
+            .mt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+            .mt b { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .mt small { color: var(--sub); font-size: 12px; }
+            .mini-btns { display: flex; align-items: center; gap: 2px; }
+            .mini button {
+              width: 42px; height: 42px; display: grid; place-items: center;
+            }
+            .mini button svg { width: 22px; height: 22px; fill: currentColor; stroke: none; }
+            .mp {
+              position: absolute; left: 0; right: 0; top: 0; height: 2.5px;
+              background: var(--track);
+            }
+            .mp i {
+              display: block; height: 100%; background: var(--text); width: 0;
+              border-radius: 0 2px 2px 0;
+              transition: none;
+            }
+
+            /* ========== NOW PLAYING – light ========== */
+            .np {
+              position: absolute; inset: 0; z-index: 3;
+              display: flex; flex-direction: column; overflow: hidden;
+              --tint-rgb: 232,228,239;
+              background: rgb(var(--tint-rgb));
+              transform: translateY(105%);
+              visibility: hidden;
+              transition: transform .5s cubic-bezier(.32,.72,0,1), visibility 0s .5s, --tint-rgb .9s ease, --bg-top .9s ease, --bg-edge .9s ease, --bg-mid .9s ease, --glow1 .9s ease, --glow2 .9s ease;
+              color: #2c2c2e;
+            }
+            .app.show .np {
+              transform: none; visibility: visible;
+              transition: transform .5s cubic-bezier(.32,.72,0,1), --tint-rgb .9s ease, --bg-top .9s ease, --bg-edge .9s ease, --bg-mid .9s ease, --glow1 .9s ease, --glow2 .9s ease;
+            }
+
+            /* Nền: các lớp màu lấy từ ảnh bìa. Đầu nền cùng tông với phần đầu ảnh, đoạn giữa nối liền
+               với mép dưới ảnh (ảnh mờ dần vào đúng màu này), cuối chuyển sang tông sáng để chữ dễ đọc.
+               Màu do JS tính (buildTheme) và đổi mượt nhờ @property. */
+            .bg-mesh {
+              position: absolute; inset: 0; z-index: 0;
+              pointer-events: none;
+              background:
+                radial-gradient(90% 30% at 92% 70%, rgba(var(--glow2), .42) 0%, transparent 100%),
+                radial-gradient(95% 32% at 6% 90%, rgba(var(--glow1), .40) 0%, transparent 100%),
+                linear-gradient(180deg,
+                  rgb(var(--bg-top)) 0,
+                  rgb(var(--bg-edge)) 38%,
+                  rgb(var(--bg-mid)) 58%,
+                  rgb(var(--tint-rgb)) 76%,
+                  rgb(var(--tint-rgb)) 100%);
+            }
+
+            /* Nền: ảnh bìa mờ xoay chậm – độ nhạt đặt trong setCover */
+            .bg-spin {
+              position: absolute; z-index: 0; pointer-events: none;
+              left: 50%; top: 50%;
+              width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax;
+              background-size: cover; background-position: center; background-repeat: no-repeat;
+              filter: blur(18px) saturate(1.35);
+              opacity: 0; transition: opacity .8s ease;
+              animation: bgspin 80s linear infinite;
+              will-change: transform;
+            }
+            .app:not(.show) .bg-spin { animation-play-state: paused; }
+            @keyframes bgspin { to { transform: rotate(360deg); } }
+            @media (prefers-reduced-motion: reduce) { .bg-spin { animation: none; } }
+
+            /* Ảnh bìa vuông, rộng hết màn hình, đặt giữa vùng phía trên tên bài. Hai mép trên/dưới tan dần
+               vào nền (mask); nền phía sau giữ nguyên. */
+            .cover-bg {
+              --cw: min(100vw, 430px);
+              --sat: env(safe-area-inset-top, 0px);
+              --sab: env(safe-area-inset-bottom, 0px);
+              position: absolute; z-index: 0; overflow: hidden;
+              left: 50%; width: var(--cw); height: var(--cw);
+              margin-left: calc(var(--cw) / -2);
+              top: calc((100% + var(--sat) - var(--sab) - 246px) / 2);
+              margin-top: calc(var(--cw) / -2);
+              -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,.35) 10%, #000 28%, #000 48%, rgba(0,0,0,.45) 74%, transparent 100%);
+              mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,.35) 10%, #000 28%, #000 48%, rgba(0,0,0,.45) 74%, transparent 100%);
+            }
+            .cover-inner {
+              position: absolute; inset: 0;
+              background-size: cover;
+              background-position: center;
+              background-repeat: no-repeat;
+            }
+            .cover-fallback {
+              position: absolute; inset: 0;
+              background:
+                radial-gradient(ellipse 80% 60% at 50% 28%, var(--c1) 0%, transparent 55%),
+                radial-gradient(circle at 22% 35%, var(--c2) 0 18%, transparent 45%),
+                radial-gradient(circle at 78% 22%, var(--c3) 0 14%, transparent 40%),
+                radial-gradient(circle at 65% 55%, var(--c4) 0 12%, transparent 38%),
+                radial-gradient(ellipse at 50% 85%, var(--wash), transparent 55%),
+                linear-gradient(180deg, #eae6f0 0%, #d9d2e4 40%, #cfc6db 100%);
+            }
+
+            .top {
+              position: absolute; top: 0; left: 0; right: 0;
+              display: flex; align-items: center; justify-content: space-between;
+              padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 0;
+              z-index: 2;
+            }
+            .top-left, .top-right {
+              display: flex; align-items: center; gap: 4px;
+            }
+            .top button {
+              width: 40px; height: 40px; display: grid; place-items: center;
+              border-radius: 50%;
+              color: rgba(40,40,50,.75);
+            }
+            .top button:active { background: rgba(0,0,0,.06); }
+            .top svg { width: 22px; height: 22px; stroke-width: 1.6; }
+            .top .status {
+              display: flex; align-items: center; gap: 5px;
+              font-size: 12px; font-weight: 500;
+              padding: 5px 10px; border-radius: 16px;
+              background: rgba(255,255,255,.55);
+              color: rgba(40,40,50,.7);
+              backdrop-filter: blur(8px);
+              -webkit-backdrop-filter: blur(8px);
+            }
+            .status.fd { opacity: 0; transition: opacity .2s; }
+            .status i {
+              width: 6px; height: 6px; border-radius: 50%;
+              background: #30d158;
+              box-shadow: 0 0 0 2.5px rgba(48,209,88,.25);
+            }
+            .status.off i { background: rgba(0,0,0,.25); box-shadow: none; }
+            .top button, .top .status { transition: color .5s, background-color .5s; }
+            /* Nền đầu tối (ảnh bìa tối) → icon và nhãn chuyển sang màu sáng */
+            .np[data-top="dark"] .top button { color: rgba(255,255,255,.9); }
+            .np[data-top="dark"] .top button:active { background: rgba(255,255,255,.16); }
+            .np[data-top="dark"] .top .status { background: rgba(255,255,255,.2); color: rgba(255,255,255,.92); }
+            .np[data-top="dark"] .status.off i { background: rgba(255,255,255,.55); }
+
+            .np-bottom {
+              position: relative;
+              z-index: 1;
+              margin-top: auto;
+              padding: 28px 0 calc(14px + env(safe-area-inset-bottom, 0px));
+              background: linear-gradient(
+                to top,
+                rgba(var(--tint-rgb), .68) 0%,
+                rgba(var(--tint-rgb), .45) 40%,
+                rgba(var(--tint-rgb), .15) 78%,
+                transparent 100%
+              );
+              color: #fff;
+            }
+
+            .info {
+              padding: 0 24px 6px;
+              text-align: left;
+            }
+            .info h1 {
+              margin: 0;
+              font-size: 22px;
+              font-weight: 700;
+              letter-spacing: -.2px;
+              color: #1c1c1e;
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            }
+            .artist-row {
+              display: flex;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 6px;
+              margin-top: 6px;
+            }
+            .artist {
+              font-size: 14px;
+              font-weight: 500;
+              color: #48484e;
+            }
+
+            /* Icon action row – chỉ icon, gọn */
+            .icon-row {
+              display: flex;
+              justify-content: space-around;
+              align-items: center;
+              padding: 12px 20px 4px;
+            }
+            .icon-row button {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 48px;
+              height: 48px;
+              border-radius: 14px;
+              color: #48484e;
+              position: relative;
+              transition: background .15s, color .15s, transform .15s;
+            }
+            .icon-row button:active { background: rgba(0,0,0,.06); transform: scale(.92); }
+            .icon-row svg {
+              width: 24px;
+              height: 24px;
+              stroke-width: 1.7;
+            }
+            .icon-row .liked svg {
+              stroke: #ff2d55;
+              fill: #ff2d55;
+            }
+
+            /* Progress – smooth */
+            .bar {
+              padding: 10px 24px 0;
+            }
+            .seek {
+              position: relative;
+              height: 28px;
+              display: flex;
+              align-items: center;
+              touch-action: none;
+              cursor: pointer;
+            }
+            .seek::before {
+              content: "";
+              position: absolute;
+              left: 0; right: 0;
+              height: 4px;
+              border-radius: 2px;
+              background: rgba(0,0,0,.1);
+            }
+            .fill {
+              position: absolute;
+              left: 0;
+              height: 4px;
+              border-radius: 2px;
+              background: #3a3a3c;
+              width: 0;
+              pointer-events: none;
+              will-change: width;
+            }
+            .knob {
+              position: absolute;
+              width: 14px;
+              height: 14px;
+              margin-left: -7px;
+              border-radius: 50%;
+              background: #3a3a3c;
+              box-shadow: 0 1px 4px rgba(0,0,0,.25);
+              left: 0;
+              pointer-events: none;
+              will-change: left;
+              transition: transform .15s;
+            }
+            .seek:active .knob { transform: scale(1.4); }
+            .times {
+              display: flex;
+              justify-content: space-between;
+              font-size: 11px;
+              margin-top: 2px;
+              font-variant-numeric: tabular-nums;
+              font-weight: 500;
+              color: #5b5b62;
+            }
+
+            /* Main controls */
+            .ctrl {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 6px 28px 8px;
+            }
+            .ctrl button {
+              width: 48px;
+              height: 48px;
+              display: grid;
+              place-items: center;
+              border-radius: 50%;
+              color: #2c2c2e;
+              transition: background .15s, transform .15s;
+            }
+            .ctrl button:active { background: rgba(0,0,0,.06); }
+            .ctrl svg { width: 26px; height: 26px; stroke-width: 1.7; }
+            .ctrl .fl svg { fill: currentColor; stroke: none; }
+            .ctrl .on { color: #ff2d55; }
+            .ctrl .play {
+              width: 56px;
+              height: 56px;
+              background: none;
+              color: #1c1c1e;
+            }
+            .ctrl .play:active { transform: scale(.9); background: rgba(0,0,0,.06); }
+            .ctrl .play svg { width: 32px; height: 32px; fill: currentColor; stroke: none; }
+
+            .promo {
+              margin: 4px 20px 0;
+              padding: 8px 14px;
+              border-radius: 10px;
+              background: rgba(255,255,255,.55);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 12px;
+              color: #6e6e73;
+              border: 1px solid rgba(0,0,0,.04);
+            }
+            .promo span { flex: 1; }
+            .promo b { color: #b07a00; font-weight: 600; }
+
+            /* Từ tên bài trở xuống: nền tối cùng tông với ảnh, chữ & icon sáng */
+            .np .info h1 { color: #fff; font-size: 24px; text-shadow: 0 1px 10px rgba(0,0,0,.3); }
+            .np .artist { color: rgba(255,255,255,.75); text-shadow: 0 1px 8px rgba(0,0,0,.3); }
+            .np .icon-row button { color: rgba(255,255,255,.78); }
+            .np .icon-row button:active, .np .ctrl button:active { background: rgba(255,255,255,.12); }
+            .np .times { color: rgba(255,255,255,.5); }
+            .np .seek::before { background: rgba(255,255,255,.22); }
+            .np .fill, .np .knob { background: #fff; }
+            .np .knob { box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+            .np .ctrl button { color: rgba(255,255,255,.88); }
+            .np .ctrl .on { color: #ff2d55; }
+            .np .ctrl .play { width: 68px; height: 68px; color: #fff; background: none; }
+            .np .ctrl .play:active { background: none; transform: scale(.9); }
+            .np .ctrl .play svg { width: 42px; height: 42px; }
+            .np .promo { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.08); color: rgba(255,255,255,.6); }
+            .np .promo b { color: #f5c451; }
+
+            /* Animations */
+            .nx { animation: inR .4s cubic-bezier(.32,.72,0,1); }
+            .pv { animation: inL .4s cubic-bezier(.32,.72,0,1); }
+            .cv { animation: cv .55s cubic-bezier(.32,.72,0,1); }
+            .icn { animation: icn .22s ease; }
+            @keyframes inR { from { opacity: 0; transform: translateX(24px); } }
+            @keyframes inL { from { opacity: 0; transform: translateX(-24px); } }
+            @keyframes cv { from { opacity: 0; transform: scale(1.06); } }
+            @keyframes icn { from { opacity: 0; transform: scale(.55); } }
+
+            /* ========== SHEET ========== */
+            .sheet {
+              position: absolute; inset: 0;
+              display: flex; align-items: flex-end;
+              background: rgba(0,0,0,0); z-index: 5;
+              visibility: hidden;
+              transition: background .3s, visibility 0s .35s;
+            }
+            .sheet.open {
+              background: rgba(0,0,0,.08); visibility: visible;
+              transition: background .3s;
+            }
+            .pane {
+              width: 100%; max-height: 78%;
+              display: flex; flex-direction: column;
+              background: rgba(255,255,255,.62);
+              backdrop-filter: blur(10px) saturate(160%);
+              -webkit-backdrop-filter: blur(10px) saturate(160%);
+              border-radius: 20px 20px 0 0;
+              transform: translateY(100%);
+              transition: transform .4s cubic-bezier(.32,.72,0,1);
+              padding-bottom: env(safe-area-inset-bottom, 0px);
+              box-shadow: 0 -8px 40px rgba(0,0,0,.15);
+            }
+            .pane.tall { height: 78%; }
+            .pane .chip { background: rgba(0,0,0,.06); }
+            .pane .chip.on { background: var(--text); }
+            .pane .add input { background: rgba(0,0,0,.06); }
+            .pane .row.cur, .pane .row:active { background: rgba(0,0,0,.06); }
+            .pane .vhead { background: rgba(255,255,255,.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+            .sheet.open .pane { transform: none; }
+            .grab {
+              width: 36px; height: 4px; border-radius: 2px;
+              background: var(--track); margin: 10px auto 4px; flex: none;
+            }
+            .hd {
+              display: flex; justify-content: space-between; align-items: baseline;
+              gap: 10px; padding: 8px 20px 6px;
+              font-weight: 700; font-size: 17px; flex: none;
+            }
+            .hd small { font-weight: 500; color: var(--sub); font-size: 13px; }
+            .chips {
+              display: flex; gap: 8px; overflow-x: auto;
+              padding: 4px 20px 10px; flex: none; scrollbar-width: none;
+            }
+            .chips::-webkit-scrollbar { display: none; }
+            .chip {
+              flex: none; padding: 7px 14px; border-radius: 20px;
+              background: var(--surface2); font-size: 13px; font-weight: 500;
+              transition: background .25s cubic-bezier(.32,.72,0,1), color .25s, transform .2s;
+            }
+            .chip:active { transform: scale(.94); }
+            .chip.on { background: var(--text); color: var(--bg); }
+            .body {
+              flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 16px;
+              -webkit-overflow-scrolling: touch;
+              transition: opacity .2s ease, transform .25s cubic-bezier(.32,.72,0,1);
+            }
+            .body.sw { opacity: 0; transform: translateY(8px); }
+            .sheet .row {
+              opacity: 0; transform: translateY(10px);
+              animation: rise .35s forwards;
+              animation-delay: calc(var(--k, 0) * 35ms + 80ms);
+            }
+            .na .row { animation: none; opacity: 1; transform: none; }
+            @keyframes rise { to { opacity: 1; transform: none; } }
+
+            .tm { display: flex; align-items: center; gap: 8px; flex: none; }
+            .tm button { width: 28px; height: 28px; color: var(--muted); display: grid; place-items: center; }
+            .ck {
+              width: 22px; height: 22px; border-radius: 50%;
+              border: 1.5px solid var(--muted); display: grid; place-items: center;
+              font-size: 12px; color: #fff; flex: none;
+              transition: background .2s, border-color .2s;
+            }
+            .ck.on { background: var(--accent); border-color: var(--accent); }
+            .add {
+              display: flex; gap: 8px; padding: 8px 20px;
+            }
+            .add input {
+              flex: 1; min-width: 0; background: var(--surface2); border: 0;
+              border-radius: 12px; padding: 12px 14px; color: var(--text);
+              font: inherit; font-size: 15px; outline: 0;
+            }
+            .add button {
+              padding: 0 16px; border-radius: 12px;
+              background: var(--text); color: var(--bg); font-weight: 600; font-size: 14px;
+            }
+
+            /* Vocab list in sheet – Trung / Pinyin / Việt */
+            .vlist { padding: 4px 20px 24px; }
+            .vhead {
+              display: grid;
+              grid-template-columns: 1fr 1.15fr 1fr;
+              gap: 8px;
+              padding: 6px 4px 10px;
+              font-size: 11px;
+              font-weight: 600;
+              color: var(--muted);
+              text-transform: uppercase;
+              letter-spacing: .4px;
+              border-bottom: 1px solid var(--track);
+              position: sticky;
+              top: 0;
+              background: var(--surface);
+              z-index: 1;
+            }
+            .vitem {
+              display: grid;
+              grid-template-columns: 1fr 1.15fr 1fr;
+              gap: 8px;
+              padding: 12px 4px;
+              border-bottom: 1px solid rgba(0,0,0,.05);
+              font-size: 14px;
+              line-height: 1.4;
+              opacity: 0;
+              transform: translateY(8px);
+              animation: rise .35s forwards;
+              animation-delay: calc(var(--k, 0) * 28ms + 60ms);
+            }
+            .vitem:last-child { border-bottom: 0; }
+            .na .vitem { animation: none; opacity: 1; transform: none; }
+            .vitem .zh { font-weight: 600; color: var(--text); font-size: 15px; }
+            .vitem .py { color: var(--sub); font-style: italic; font-size: 13px; }
+            .vitem .vi { color: var(--sub); font-size: 13px; }
+            .lytxt {
+              padding: 8px 24px 32px; font-size: 17px; line-height: 1.85;
+              white-space: pre-wrap; user-select: text; -webkit-user-select: text;
+              color: var(--text);
+            }
+            .lytxt .singer { color: var(--accent2); font-weight: 600; font-size: 13px; margin-top: 16px; display: block; }
+
+            .toast {
+              position: absolute; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+              transform: translate(-50%, 12px);
+              background: var(--text); color: var(--bg);
+              padding: 10px 18px; border-radius: 20px;
+              font-size: 13px; font-weight: 500;
+              opacity: 0; pointer-events: none;
+              transition: opacity .25s, transform .25s; z-index: 9;
+              white-space: nowrap; box-shadow: var(--shadow);
+            }
+            .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+            audio { display: none; }
+
+            @media (max-height: 700px) {
+              .icon-row { padding-top: 4px; }
+              .bar { padding-top: 4px; }
+              .ctrl { padding-top: 2px; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app" id="app">
+            <!-- HOME -->
+            <div class="home" id="home">
+                <div class="sbox" id="sbox" hidden>
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="6.5" />
+                        <path d="M16 16l4.5 4.5" />
+                    </svg>
+                    <input
+                        id="q"
+                        placeholder="Tìm bài hát, nghệ sĩ, pinyin..."
+                        autocomplete="off"
+                    />
+                    <button id="qc" hidden aria-label="Xoá">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M7 7l10 10M17 7L7 17" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="hbody" id="hbody"></div>
+                <div class="mini" id="mini">
+                    <img class="mc" id="mc" alt="" />
+                    <div class="mt"><b id="mT"></b><small id="mA"></small></div>
+                    <div class="mini-btns">
+                        <button
+                            id="mPlay"
+                            aria-label="Phát / Tạm dừng"
+                        ></button>
+                    </div>
+                    <div class="mp"><i id="mF"></i></div>
+                </div>
+                <nav class="tabbar">
+                    <div class="tabs" id="tabs" data-p="0">
+                        <i class="tp"></i>
+                        <button
+                            class="tab on"
+                            data-m="me"
+                            data-p="0"
+                            aria-label="Tôi"
+                        >
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="8" r="3.8" />
+                                <path
+                                    d="M4.5 20.5c.8-4.2 3.8-6.3 7.5-6.3s6.7 2.1 7.5 6.3"
+                                />
+                            </svg>
+                        </button>
+                        <button
+                            class="tab"
+                            data-m="m"
+                            data-p="1"
+                            aria-label="Tìm nhạc"
+                        >
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 18V6l10-2v12" />
+                                <circle cx="7" cy="18" r="2.2" />
+                                <circle cx="17" cy="16" r="2.2" />
+                            </svg>
+                        </button>
+                        <button
+                            class="tab"
+                            data-m="w"
+                            data-p="2"
+                            aria-label="Tra từ"
+                        >
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M12 6.6C10.5 5.4 8.4 4.8 5 4.8v12.6c3.4 0 5.5.6 7 1.8 1.5-1.2 3.6-1.8 7-1.8V4.8c-3.4 0-5.5.6-7 1.8z"
+                                />
+                                <path d="M12 6.6v12.6" />
+                            </svg>
+                        </button>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- NOW PLAYING -->
+            <div class="np" id="np">
+                <div class="bg-mesh"></div>
+                <div class="bg-spin" id="bgSpin"></div>
+                <div class="cover-bg" id="cover">
+                    <div class="cover-fallback" id="coverFallback"></div>
+                    <div class="cover-inner" id="coverInner"></div>
+                </div>
+
+                <div class="top">
+                    <div class="top-left">
+                        <button id="min" aria-label="Thu nhỏ">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="status" id="status">
+                        <i></i><span id="stxt">Đang phát</span>
+                    </div>
+                    <div class="top-right">
+                        <button id="share" aria-label="Chia sẻ">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="np-bottom">
+                    <div class="info">
+                        <h1 id="title"></h1>
+                        <div class="artist-row">
+                            <span class="artist" id="artist"></span>
+                        </div>
+                    </div>
+
+                    <div class="icon-row">
+                        <button id="bV" aria-label="Từ vựng bài này">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M4 4h12a2 2 0 0 1 2 2v14l-4-2-4 2-4-2-4 2V6a2 2 0 0 1 2-2z"
+                                />
+                                <path d="M8 8h6M8 12h4" />
+                            </svg>
+                        </button>
+                        <button id="bA" aria-label="Thêm vào playlist">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 6h11M9 12h11M9 18h7" />
+                                <path d="M4 6v12M2 9l2-3 2 3" />
+                            </svg>
+                        </button>
+                        <button id="bL" aria-label="Xem lời bài hát">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M5 5h14v14H5z" />
+                                <path d="M8 9h8M8 12h8M8 15h5" />
+                            </svg>
+                        </button>
+                        <button id="like" aria-label="Yêu thích">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="bar">
+                        <div class="seek" id="seek">
+                            <div class="fill" id="fill"></div>
+                            <div class="knob" id="knob"></div>
+                        </div>
+                        <div class="times">
+                            <span id="cur">00:00</span>
+                            <span id="dur">00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="ctrl">
+                        <button id="shuffle" aria-label="Phát ngẫu nhiên">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M3 7h3.5c5 0 6 10 11 10H21M3 17h3.5c1.8 0 3-1.3 4-2.8M14 8.8c1-1 2-1.8 3.5-1.8H21M18 4l3 3-3 3M18 14l3 3-3 3"
+                                />
+                            </svg>
+                        </button>
+                        <button class="fl" id="prev" aria-label="Bài trước">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M6 5h2.5v14H6zM20 5v14L9.5 12z" />
+                            </svg>
+                        </button>
+                        <button
+                            class="play fl"
+                            id="play"
+                            aria-label="Phát / Tạm dừng"
+                        ></button>
+                        <button class="fl" id="next" aria-label="Bài sau">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M15.5 5H18v14h-2.5zM4 5v14l10.5-7z" />
+                            </svg>
+                        </button>
+                        <button id="queue" aria-label="Danh sách phát">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 6h16M4 12h16M4 18h10" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sheet" id="sheet">
+                <div class="pane" id="pane"></div>
+            </div>
+            <div class="toast" id="toast"></div>
+            <audio id="audio" preload="metadata"></audio>
+        </div>
+
+        <script>
+                                  // ========== DATA ==========
+                                  // Thêm src (audio URL) và img (cover URL) cho từng bài.
+                                  // Nếu không có src/img thật, player vẫn chạy bằng timer demo.
+                                  var tracks = [
+                                    {
+                                      t: "冬眠·2023",
+                                      a: "刘兆宇，阿YueYue",
+                                      py: "dong mian liu zhao yu a yueyue",
+                                      d: 191,
+                                      src: ["https://raw.githubusercontent.com/kaijules/mp3cnmusic/main/dongmian-liuzhanyu-ayueyue.mp3", "https://files.catbox.moe/cqidyp.mp3"], // thử lần lượt từ trái sang phải; có thể là 1 chuỗi hoặc 1 mảng
+                                      img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShxZps3m4DolGPnlKzM8skVefxhaumNsfzk2B14481ng&s=10", // ví dụ: "https://example.com/cover.jpg"
+                                      c: ["rgba(200,170,230,.55)", "rgba(160,180,230,.5)", "rgba(220,170,200,.45)", "rgba(180,160,220,.4)"],
+                                      w: "rgba(140,120,180,.45)",
+                                      vocab: [
+              { "zh": "听", "py": "tīng", "vi": "nghe" },
+              { "zh": "冬至", "py": "dōng zhì", "vi": "đông chí" },
+              { "zh": "白雪", "py": "bái xuě", "vi": "tuyết trắng" },
+              { "zh": "掩饰", "py": "yǎn shì", "vi": "che đậy, ngụy trang" },
+              { "zh": "哽咽", "py": "gěng yè", "vi": "nghẹn ngào, nức nở" },
+              { "zh": "世界", "py": "shì jiè", "vi": "thế giới" },
+              { "zh": "下雪", "py": "xià xuě", "vi": "tuyết rơi" },
+              { "zh": "凛冽", "py": "lǐn liè", "vi": "rét buốt, lạnh lẽo" },
+              { "zh": "风", "py": "fēng", "vi": "gió" },
+              { "zh": "吹过", "py": "chuī guò", "vi": "thổi qua" },
+              { "zh": "耳边", "py": "ěr biān", "vi": "bên tai" },
+              { "zh": "过头", "py": "guò tóu", "vi": "quá mức, quá đầu" },
+              { "zh": "重", "py": "zhòng", "vi": "nặng" },
+              { "zh": "雪花", "py": "xuě huā", "vi": "bông tuyết" },
+              { "zh": "一片片", "py": "yī piàn piàn", "vi": "từng mảnh, từng cánh" },
+              { "zh": "飘落", "py": "piāo luò", "vi": "bay rơi, rơi lả tả" },
+              { "zh": "回忆", "py": "huí yì", "vi": "ký ức, hồi ức" },
+              { "zh": "涌入", "py": "yǒng rù", "vi": "ùa vào, tràn vào" },
+              { "zh": "脑中", "py": "nǎo zhōng", "vi": "trong đầu" },
+              { "zh": "耳机", "py": "ěr jī", "vi": "tai nghe" },
+              { "zh": "播放", "py": "bō fàng", "vi": "phát (nhạc)" },
+              { "zh": "这首歌", "py": "zhè shǒu gē", "vi": "bài hát này" },
+              { "zh": "冬天", "py": "dōng tiān", "vi": "mùa đông" },
+              { "zh": "循环", "py": "xún huán", "vi": "lặp lại, vòng lặp" },
+              { "zh": "每当", "py": "měi dāng", "vi": "mỗi khi" },
+              { "zh": "再次", "py": "zài cì", "vi": "một lần nữa" },
+              { "zh": "响起", "py": "xiǎng qǐ", "vi": "vang lên" },
+              { "zh": "好像", "py": "hǎo xiàng", "vi": "dường như, giống như" },
+              { "zh": "坐上", "py": "zuò shàng", "vi": "ngồi lên" },
+              { "zh": "时光机", "py": "shí guāng jī", "vi": "cỗ máy thời gian" },
+              { "zh": "思绪", "py": "sī xù", "vi": "tâm tư, dòng suy nghĩ" },
+              { "zh": "冻霜", "py": "dòng shuāng", "vi": "sương giá" },
+              { "zh": "凝结", "py": "níng jié", "vi": "đóng băng, kết lại" },
+              { "zh": "那年", "py": "nà nián", "vi": "năm ấy" },
+              { "zh": "说的话", "py": "shuō de huà", "vi": "lời nói" },
+              { "zh": "格外", "py": "gé wài", "vi": "đặc biệt, hết sức" },
+              { "zh": "少了很多", "py": "shǎo le hěn duō", "vi": "ít đi rất nhiều" },
+              { "zh": "推迟", "py": "tuī chí", "vi": "hoãn lại" },
+              { "zh": "高考", "py": "gāo kǎo", "vi": "kỳ thi đại học (Gaokao)" },
+              { "zh": "发烧", "py": "fā shāo", "vi": "sốt" },
+              { "zh": "看", "py": "kàn", "vi": "xem" },
+              { "zh": "世界杯", "py": "shì jiè bēi", "vi": "World Cup" },
+              { "zh": "场景", "py": "chǎng jǐng", "vi": "cảnh tượng, khung cảnh" },
+              { "zh": "闪过", "py": "shǎn guò", "vi": "lướt qua, hiện lên" },
+              { "zh": "朋友们", "py": "péng you men", "vi": "các bạn bè" },
+              { "zh": "不能", "py": "bù néng", "vi": "không thể" },
+              { "zh": "见面", "py": "jiàn miàn", "vi": "gặp mặt" },
+              { "zh": "分享", "py": "fēn xiǎng", "vi": "chia sẻ" },
+              { "zh": "停留", "py": "tíng liú", "vi": "dừng lại, lưu lại" },
+              { "zh": "屏幕", "py": "píng mù", "vi": "màn hình" },
+              { "zh": "千里外", "py": "qiān lǐ wài", "vi": "cách xa ngàn dặm" },
+              { "zh": "思念", "py": "sī niàn", "vi": "nhớ nhung" },
+              { "zh": "凝固", "py": "níng gù", "vi": "đông cứng, đông đặc" },
+              { "zh": "许久", "py": "xǔ jiǔ", "vi": "đã lâu" },
+              { "zh": "没", "py": "méi", "vi": "không, chưa" },
+              { "zh": "亲吻", "py": "qīn wěn", "vi": "hôn" },
+              { "zh": "家人", "py": "jiā rén", "vi": "người nhà" },
+              { "zh": "脸颊", "py": "liǎn jiá", "vi": "má" },
+              { "zh": "隔着", "py": "gé zhe", "vi": "cách bởi, ngăn bởi" },
+              { "zh": "摄像头", "py": "shè xiàng tóu", "vi": "camera" },
+              { "zh": "怎能", "py": "zěn néng", "vi": "sao có thể" },
+              { "zh": "看清楚", "py": "kàn qīng chǔ", "vi": "nhìn rõ" },
+              { "zh": "曾", "py": "céng", "vi": "từng" },
+              { "zh": "繁华", "py": "fán huá", "vi": "phồn hoa, sầm uất" },
+              { "zh": "巷口", "py": "xiàng kǒu", "vi": "miệng hẻm, đầu ngõ" },
+              { "zh": "如今", "py": "rú jīn", "vi": "ngày nay, bây giờ" },
+              { "zh": "灯光", "py": "dēng guāng", "vi": "ánh đèn" },
+              { "zh": "忽明又忽灭", "py": "hū míng yòu hū miè", "vi": "lúc sáng lúc tắt" },
+              { "zh": "空荡", "py": "kōng dàng", "vi": "trống trải, hoang vắng" },
+              { "zh": "街道", "py": "jiē dào", "vi": "đường phố" },
+              { "zh": "人与人之间", "py": "rén yǔ rén zhī jiān", "vi": "giữa người với người" },
+              { "zh": "关系", "py": "guān xì", "vi": "mối quan hệ" },
+              { "zh": "越来越远", "py": "yuè lái yuè yuǎn", "vi": "ngày càng xa" },
+              { "zh": "这段", "py": "zhè duàn", "vi": "đoạn này" },
+              { "zh": "记忆", "py": "jì yì", "vi": "ký ức" },
+              { "zh": "随", "py": "suí", "vi": "theo" },
+              { "zh": "融化", "py": "róng huà", "vi": "tan chảy" },
+              { "zh": "留的", "py": "liú de", "vi": "còn lại" },
+              { "zh": "空缺", "py": "kōng quē", "vi": "khoảng trống, chỗ trống" },
+              { "zh": "如何", "py": "rú hé", "vi": "như thế nào" },
+              { "zh": "充填", "py": "chōng tián", "vi": "lấp đầy, bù đắp" },
+              { "zh": "积雪", "py": "jī xuě", "vi": "tuyết tích tụ" },
+              { "zh": "伴随", "py": "bàn suí", "vi": "đi kèm, theo cùng" },
+              { "zh": "寒风", "py": "hán fēng", "vi": "gió lạnh" },
+              { "zh": "飘下", "py": "piāo xià", "vi": "bay xuống" },
+              { "zh": "怎样", "py": "zěn yàng", "vi": "làm sao, như thế nào" },
+              { "zh": "陷入", "py": "xiàn rù", "vi": "rơi vào, chìm vào" },
+              { "zh": "永恒", "py": "yǒng héng", "vi": "vĩnh hằng" },
+              { "zh": "冬眠", "py": "dōng mián", "vi": "ngủ đông" },
+              { "zh": "看", "py": "kàn", "vi": "nhìn" },
+              { "zh": "春日", "py": "chūn rì", "vi": "ngày xuân" },
+              { "zh": "蝴蝶", "py": "hú dié", "vi": "con bướm" },
+              { "zh": "颤抖", "py": "chàn dǒu", "vi": "rung rẩy" },
+              { "zh": "飞越", "py": "fēi yuè", "vi": "bay vượt qua" },
+              { "zh": "和风", "py": "hé fēng", "vi": "gió dịu" },
+              { "zh": "暖阳", "py": "nuǎn yáng", "vi": "nắng ấm" },
+              { "zh": "倾斜", "py": "qīng xié", "vi": "nghiêng" },
+              { "zh": "却", "py": "què", "vi": "nhưng lại" },
+              { "zh": "冰冷", "py": "bīng lěng", "vi": "lạnh lẽo, giá lạnh" },
+              { "zh": "季节", "py": "jì jié", "vi": "mùa" },
+              { "zh": "仲夏", "py": "zhòng xià", "vi": "giữa mùa hè" },
+              { "zh": "弯月", "py": "wān yuè", "vi": "trăng khuyết" },
+              { "zh": "把", "py": "bǎ", "vi": "(đưa tân ngữ lên trước)" },
+              { "zh": "欢愉", "py": "huān yú", "vi": "niềm vui" },
+              { "zh": "偷窃", "py": "tōu qiè", "vi": "đánh cắp" },
+              { "zh": "倒挂", "py": "dào guà", "vi": "treo ngược" },
+              { "zh": "天际", "py": "tiān jì", "vi": "chân trời" },
+              { "zh": "笑靥", "py": "xiào yè", "vi": "nụ cười, má lúm" },
+              { "zh": "一双", "py": "yī shuāng", "vi": "một đôi" },
+              { "zh": "无形", "py": "wú xíng", "vi": "vô hình" },
+              { "zh": "抓不住", "py": "zhuā bù zhù", "vi": "không nắm được" },
+              { "zh": "手", "py": "shǒu", "vi": "tay" },
+              { "zh": "悄悄", "py": "qiāo qiāo", "vi": "lặng lẽ" },
+              { "zh": "那段", "py": "nà duàn", "vi": "đoạn ấy" },
+              { "zh": "时光", "py": "shí guāng", "vi": "thời gian" },
+              { "zh": "带走", "py": "dài zǒu", "vi": "mang đi" },
+              { "zh": "再也", "py": "zài yě", "vi": "không còn nữa" },
+              { "zh": "回不去", "py": "huí bù qù", "vi": "không quay lại được" },
+              { "zh": "不会再有人", "py": "bú huì zài yǒu rén", "vi": "sẽ không còn ai" },
+              { "zh": "等我太久", "py": "děng wǒ tài jiǔ", "vi": "đợi tôi quá lâu" },
+              { "zh": "要如何", "py": "yào rú hé", "vi": "phải làm sao" },
+              { "zh": "纪念", "py": "jì niàn", "vi": "tưởng niệm, kỷ niệm" },
+              { "zh": "曾经", "py": "céng jīng", "vi": "từng" },
+              { "zh": "那些年", "py": "nà xiē nián", "vi": "những năm ấy" },
+              { "zh": "孤独", "py": "gū dú", "vi": "cô đơn" },
+              { "zh": "溶解", "py": "róng jiě", "vi": "hòa tan" },
+              { "zh": "深夜", "py": "shēn yè", "vi": "đêm khuya" },
+              { "zh": "某年的某月", "py": "mǒu nián de mǒu yuè", "vi": "một năm nào đó, một tháng nào đó" },
+              { "zh": "再重逢", "py": "zài chóng féng", "vi": "gặp lại lần nữa" },
+              { "zh": "以何种方式", "py": "yǐ hé zhǒng fāng shì", "vi": "bằng cách nào" },
+              { "zh": "破旧", "py": "pò jiù", "vi": "cũ kỹ, tàn tạ" },
+              { "zh": "即使", "py": "jí shǐ", "vi": "ngay cả khi" },
+              { "zh": "再多的", "py": "zài duō de", "vi": "nhiều bao nhiêu" },
+              { "zh": "遗憾", "py": "yí hàn", "vi": "tiếc nuối" },
+              { "zh": "相同", "py": "xiāng tóng", "vi": "giống nhau" },
+              { "zh": "地点", "py": "dì diǎn", "vi": "địa điểm" },
+              { "zh": "相片", "py": "xiàng piàn", "vi": "tấm ảnh" },
+              { "zh": "却", "py": "què", "vi": "nhưng" },
+              { "zh": "找不回", "py": "zhǎo bù huí", "vi": "không tìm lại được" },
+              { "zh": "另一半", "py": "lìng yī bàn", "vi": "một nửa còn lại" },
+              { "zh": "听呐", "py": "tīng na", "vi": "nghe này" },
+              { "zh": "掩盖", "py": "yǎn gài", "vi": "che phủ, che đậy" },
+              { "zh": "叹息", "py": "tàn xī", "vi": "thở dài" },
+              { "zh": "离别", "py": "lí bié", "vi": "chia ly" },
+              { "zh": "秋末", "py": "qiū mò", "vi": "cuối thu" },
+              { "zh": "落叶", "py": "luò yè", "vi": "lá rụng" },
+              { "zh": "只剩", "py": "zhǐ shèng", "vi": "chỉ còn" },
+              { "zh": "独自", "py": "dú zì", "vi": "một mình" },
+              { "zh": "领略", "py": "lǐng lüè", "vi": "cảm nhận, thưởng thức" },
+              { "zh": "海与山", "py": "hǎi yǔ shān", "vi": "biển và núi" },
+              { "zh": "风和月", "py": "fēng hé yuè", "vi": "gió và trăng" },
+              { "zh": "再没有", "py": "zài méi yǒu", "vi": "không còn nữa" }
+            ],
+                                      l: [
+                                        {s: "阿YueYue", lines: [
+                                          "你听啊 冬至的白雪",
+                                          "你听它掩饰着哽咽",
+                                          "在没有你的世界",
+                                          "（你那里下雪了吗）"
+                                        ]},
+                                        {s: "刘兆宇", lines: [
+                                          "我这里",
+                                          "凛冽的风 吹过耳边",
+                                          "风吹过头有点重",
+                                          "雪花一片片的飘落",
+                                          "有些回忆涌入脑中",
+                                          "耳机里播放的这首歌",
+                                          "是那个冬天循环听的",
+                                          "每当它再次响起",
+                                          "好像坐上了时光机",
+                                          "那思绪被冻霜凝结",
+                                          "那年说的话格外少了很多",
+                                          "被推迟的高考",
+                                          "发烧看世界杯的场景在脑中闪过",
+                                          "朋友们不能见面",
+                                          "分享停留在屏幕",
+                                          "千里外的思念在凝固",
+                                          "许久没亲吻",
+                                          "家人的脸颊隔着摄像头",
+                                          "又怎能看清楚",
+                                          "曾繁华的巷口",
+                                          "如今灯光忽明又忽灭",
+                                          "空荡的街道",
+                                          "人与人之间 关系越来越远",
+                                          "这段记忆随雪花融化",
+                                          "留的空缺要如何充填",
+                                          "积雪伴随寒风飘下",
+                                          "怎样陷入这永恒的冬眠"
+                                        ]},
+                                        {s: "阿YueYue", lines: [
+                                          "你看啊 春日的蝴蝶",
+                                          "你看它颤抖着飞越",
+                                          "和风与暖阳倾斜",
+                                          "却冰冷的季节",
+                                          "你看啊 仲夏的弯月",
+                                          "你看它把欢愉偷窃",
+                                          "倒挂天际的笑靥"
+                                        ]},
+                                        {s: "刘兆宇", lines: [
+                                          "好像一双无形抓不住的手",
+                                          "悄悄把那段时光带走",
+                                          "再也回不去 那年的冬",
+                                          "不会再有人 等我太久",
+                                          "要如何纪念 曾经那些年",
+                                          "我把孤独溶解在深夜",
+                                          "某年的某月 再重逢",
+                                          "以何种方式见面",
+                                          "破旧的你 即使有再多的遗憾",
+                                          "相同地点的相片 却找不回另一半",
+                                          "你听呐 雪花掩盖着哽咽",
+                                          "叹息着离别"
+                                        ]},
+                                        {s: "合", lines: [
+                                          "你听啊 秋末的落叶",
+                                          "你听它叹息着离别",
+                                          "只剩我独自领略",
+                                          "海与山 风和月",
+                                          "你听啊 冬至的白雪",
+                                          "你听它掩饰着哽咽",
+                                          "在没有你的世界",
+                                          "再没有你的冬眠",
+                                          "（你那里下雪了吗）"
+                                        ]}
+                                      ]
+                                    },
+
+                        {
+                          t: "跳楼机",
+                          a: "LBI利比",
+                          py: "tiao lou ji li bi lbi LBI",
+                          d: 214,
+                          src: "https://raw.githubusercontent.com/kaijules/mp3cnmusic/main/tiaolouji-lbilibi.mp3",
+                          img: "https://i.kfs.io/album/global/277994877,0v2/fit/500x500.jpg",
+                          c: ["rgba(100,180,210,.55)", "rgba(140,210,180,.45)", "rgba(180,140,220,.45)", "rgba(230,180,100,.4)"],
+                          w: "rgba(40,90,130,.5)",
+                          vocab: [
+                            { zh: "Chưa có", py: "Chưa Có", vi: "Chưa có" },
+                          ],
+                          l: [
+              {
+                s: "Verse 1",
+                lines: [
+                  "风走了 只留下一条街的叶落",
+                  "你走了 只留下我双眼的红",
+                  "逼着自己早点睡",
+                  "能不能再做一个有你的美梦",
+                  "我好像一束极光",
+                  "守在遥远的世界尽头",
+                  "看过了你的眼眸",
+                  "才知道孤独很难忍受"
+                ]
+              },
+              {
+                s: "Verse 2",
+                lines: [
+                  "可笑吗 我删访问记录的时候有多慌张",
+                  "他会看见吗 曾经只有我能看的模样",
+                  "从夜深人静 一直难过到天亮",
+                  "你反正不会再担心 我隐隐作疼的心脏",
+                  "好像遇到我 你才对自由向往",
+                  "怎么为他 失去一切也无妨"
+                ]
+              },
+              {
+                s: "Chorus 1",
+                lines: [
+                  "可能是我贱吧",
+                  "不爱我的非要上",
+                  "那么硬的南墙非要撞",
+                  "是不是内心希望",
+                  "头破血流就会让你想起",
+                  "最爱我的时光",
+                  "Baby我们的感情好像跳楼机",
+                  "让我突然地升空又急速落地",
+                  "你带给我一场疯狂",
+                  "劫后余生好难呼吸",
+                  "那天的天气难得放晴",
+                  "你说的话却把我困在雨季",
+                  "其实你不是不爱了吧",
+                  "只是有些摩擦没处理",
+                  "怎么你闭口不语",
+                  "是不是我正好",
+                  "说中你的心",
+                  "就承认还是在意吧",
+                  "就骗骗我也可以"
+                ]
+              },
+              {
+                s: "Bridge",
+                lines: [
+                  "可笑吗",
+                  "你的出现是我不能规避的伤",
+                  "怎么能接受这荒唐"
+                ]
+              },
+              {
+                s: "Chorus 2",
+                lines: [
+                  "可能是我贱吧",
+                  "不爱我的非要上",
+                  "那么硬的南墙非要撞",
+                  "是不是内心希望",
+                  "头破血流就会让你想起",
+                  "最爱我的时光",
+                  "Baby我们的感情好像跳楼机",
+                  "让我突然地升空又急速落地",
+                  "你带给我一场疯狂",
+                  "劫后余生好难呼吸",
+                  "那天的天气难得放晴",
+                  "你说的话却把我困在雨季",
+                  "其实你不是不爱了吧",
+                  "只是有些摩擦没处理",
+                  "怎么你闭口不语",
+                  "是不是我正好",
+                  "说中你的心",
+                  "就承认还是在意吧",
+                  "哪怕骗骗我也可以"
+                ]
+              },
+            ]
+            },
+            ];
+
+
+                                  var S = { f: [], p: [], v: [] };
+                                  try {
+                                    var raw = localStorage.getItem("player.v2");
+                                    if (raw) S = Object.assign(S, JSON.parse(raw));
+                                  } catch (e) {}
+                                  function save() {
+                                    try { localStorage.setItem("player.v2", JSON.stringify(S)); } catch (e) {}
+                                    renderHome(1);
+                                  }
+
+                                  // ========== STATE ==========
+                                  var i = 0, pos = 0, playing = false, shuffle = false, timer = null, raf = null;
+                                  var mode = "", tab = "all", vt = "cur", vp = 0, vi = 0, tt = null;
+                                  var hm = "me", hq = "", creating = false;
+                                  var useAudio = false;
+                                  var srcTry = [], srcIdx = 0;
+
+                                  // ===== GitHub: tự động lấy file mp3 từ repo =====
+                                  var GH_REPO = "kaijules/mp3cnmusic";
+                                  var GH_BRANCH = "main";
+                                  var ghLoaded = false;
+                                  var ghLoading = false;
+
+                                  // src có thể là chuỗi hoặc mảng nhiều link dự phòng
+                                  function srcList(tr) {
+                                    var s = tr.src;
+                                    if (!s) return [];
+                                    if (!Array.isArray(s)) s = [s];
+                                    return s.filter(function (u) { return u && String(u).trim(); });
+                                  }
+                                  // Đặt currentTime an toàn (Safari cũ ném lỗi nếu chưa tải metadata)
+                                  function setT(t) {
+                                    try { audio.currentTime = t; } catch (e) {}
+                                  }
+                                  function loadSrc(k) {
+                                    srcIdx = k;
+                                    audio.preload = "auto";
+                                    audio.src = srcTry[k];
+                                    audio.load();
+                                  }
+
+                                  // ===== Đọc metadata ID3 từ file mp3 (tên bài, nghệ sĩ, ảnh bìa) =====
+                                  function synchsafe(b, o) {
+                                    return ((b[o] & 0x7f) << 21) | ((b[o + 1] & 0x7f) << 14) | ((b[o + 2] & 0x7f) << 7) | (b[o + 3] & 0x7f);
+                                  }
+                                  function readText(bytes, enc) {
+                                    if (enc === 0) {
+                                      // ISO-8859-1
+                                      var s = "";
+                                      for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+                                      return s.replace(/\0+$/, "").trim();
+                                    }
+                                    if (enc === 3) {
+                                      // UTF-8
+                                      try {
+                                        return new TextDecoder("utf-8").decode(bytes).replace(/\0+$/, "").trim();
+                                      } catch (e) {
+                                        return "";
+                                      }
+                                    }
+                                    // UTF-16 (enc 1 or 2) – có BOM
+                                    try {
+                                      var le = true;
+                                      var start = 0;
+                                      if (bytes.length >= 2) {
+                                        if (bytes[0] === 0xff && bytes[1] === 0xfe) { le = true; start = 2; }
+                                        else if (bytes[0] === 0xfe && bytes[1] === 0xff) { le = false; start = 2; }
+                                      }
+                                      var codes = [];
+                                      for (var j = start; j + 1 < bytes.length; j += 2) {
+                                        var c = le ? (bytes[j] | (bytes[j + 1] << 8)) : ((bytes[j] << 8) | bytes[j + 1]);
+                                        if (c === 0) break;
+                                        codes.push(c);
+                                      }
+                                      return String.fromCharCode.apply(null, codes).trim();
+                                    } catch (e2) {
+                                      return "";
+                                    }
+                                  }
+                                  function parseID3(buf) {
+                                    var out = { title: "", artist: "", picture: null, mime: "image/jpeg" };
+                                    var u8 = new Uint8Array(buf);
+                                    if (u8.length < 10 || u8[0] !== 0x49 || u8[1] !== 0x44 || u8[2] !== 0x33) return out;
+                                    var ver = u8[3];
+                                    var tagSize = synchsafe(u8, 6);
+                                    var pos = 10;
+                                    // bỏ extended header nếu có
+                                    if (u8[5] & 0x40) {
+                                      if (ver >= 4) pos += synchsafe(u8, 10) + 4;
+                                      else pos += ((u8[10] << 24) | (u8[11] << 16) | (u8[12] << 8) | u8[13]) + 4;
+                                    }
+                                    var end = Math.min(10 + tagSize, u8.length);
+                                    while (pos + 10 <= end) {
+                                      var id = String.fromCharCode(u8[pos], u8[pos + 1], u8[pos + 2], u8[pos + 3]);
+                                      if (id === "\0\0\0\0" || id.charCodeAt(0) === 0) break;
+                                      var size;
+                                      if (ver >= 4) size = synchsafe(u8, pos + 4);
+                                      else size = (u8[pos + 4] << 24) | (u8[pos + 5] << 16) | (u8[pos + 6] << 8) | u8[pos + 7];
+                                      if (size <= 0 || pos + 10 + size > end) break;
+                                      var data = u8.subarray(pos + 10, pos + 10 + size);
+                                      if (id === "TIT2" || id === "TT2") {
+                                        var t = readText(data.subarray(1), data[0]);
+                                        if (t) out.title = t;
+                                      } else if (id === "TPE1" || id === "TP1") {
+                                        var a = readText(data.subarray(1), data[0]);
+                                        if (a) out.artist = a;
+                                      } else if ((id === "APIC" || id === "PIC") && !out.picture) {
+                                        try {
+                                          var enc = data[0];
+                                          var i = 1;
+                                          // mime
+                                          var mimeEnd = i;
+                                          while (mimeEnd < data.length && data[mimeEnd] !== 0) mimeEnd++;
+                                          var mime = "";
+                                          for (var m = i; m < mimeEnd; m++) mime += String.fromCharCode(data[m]);
+                                          i = mimeEnd + 1;
+                                          if (id === "PIC") {
+                                            // ID3v2.2: 3-char image format
+                                            mime = mime.toLowerCase() === "jpg" ? "image/jpeg" : "image/" + mime.toLowerCase();
+                                          } else {
+                                            if (!mime) mime = "image/jpeg";
+                                            i++; // picture type
+                                          }
+                                          // description (null-terminated, encoding-dependent)
+                                          if (enc === 0 || enc === 3) {
+                                            while (i < data.length && data[i] !== 0) i++;
+                                            i++;
+                                          } else {
+                                            while (i + 1 < data.length && !(data[i] === 0 && data[i + 1] === 0)) i += 2;
+                                            i += 2;
+                                          }
+                                          if (i < data.length) {
+                                            out.picture = data.subarray(i).slice();
+                                            out.mime = mime || "image/jpeg";
+                                          }
+                                        } catch (e3) {}
+                                      }
+                                      pos += 10 + size;
+                                    }
+                                    return out;
+                                  }
+
+                                  // Lấy metadata từ URL mp3 rồi cập nhật track
+                                  function enhanceTrackFromMp3(tr, url) {
+                                    // Chỉ lấy ~512KB đầu (đủ chứa ID3 + ảnh bìa nhỏ)
+                                    var headers = { Range: "bytes=0-524287" };
+                                    fetch(url, { headers: headers })
+                                      .then(function (r) {
+                                        // Một số CDN không hỗ trợ Range → tải full nếu cần
+                                        if (r.status === 416 || r.status === 200 || r.status === 206) return r.arrayBuffer();
+                                        return fetch(url).then(function (r2) { return r2.arrayBuffer(); });
+                                      })
+                                      .then(function (buf) {
+                                        var meta = parseID3(buf);
+                                        var changed = false;
+                                        if (meta.title) { tr.t = meta.title; changed = true; }
+                                        if (meta.artist) { tr.a = meta.artist; changed = true; }
+                                        if (meta.picture && meta.picture.length > 100) {
+                                          try {
+                                            var blob = new Blob([meta.picture], { type: meta.mime || "image/jpeg" });
+                                            tr.img = URL.createObjectURL(blob);
+                                            changed = true;
+                                          } catch (e) {}
+                                        }
+                                        if (changed) {
+                                          // Cập nhật UI nếu đang phát đúng bài này
+                                          if (tracks[i] === tr) {
+                                            $("title").textContent = tr.t;
+                                            $("artist").textContent = tr.a;
+                                            document.title = tr.t + " – " + tr.a;
+                                            setCover(tr);
+                                            updMini();
+                                          }
+                                          renderHome(1);
+                                        }
+                                      })
+                                      .catch(function () {});
+                                  }
+
+                                  // Tự động lấy danh sách file mp3 từ GitHub repo và thêm vào thư viện
+                                  function loadGitHubFiles(cb) {
+                                    if (ghLoaded) { if (cb) cb(); return; }
+                                    if (ghLoading) { if (cb) cb(); return; }
+                                    ghLoading = true;
+                                    renderHome(1);
+                                    fetch("https://api.github.com/repos/" + GH_REPO + "/contents/?ref=" + GH_BRANCH)
+                                      .then(function (r) {
+                                        if (!r.ok) throw new Error("http " + r.status);
+                                        return r.json();
+                                      })
+                                      .then(function (data) {
+                                        if (!Array.isArray(data)) throw new Error("bad response");
+                                        var files = data.filter(function (f) {
+                                          return f.type === "file" && /\.mp3$/i.test(f.name) && f.download_url;
+                                        });
+                                        var added = 0;
+                                        var newTracks = [];
+                                        files.forEach(function (f) {
+                                          var url = f.download_url;
+                                          var exists = tracks.some(function (tr) {
+                                            return srcList(tr).indexOf(url) >= 0;
+                                          });
+                                          if (exists) return;
+                                          var base = f.name.replace(/\.mp3$/i, "");
+                                          // Tạm dùng tên file; sau đó enhanceTrackFromMp3 sẽ ghi đè bằng ID3 thật
+                                          var title = base.replace(/[-_]+/g, " ");
+                                          var tr = {
+                                            t: title,
+                                            a: "Đang tải…",
+                                            py: "",
+                                            d: 0,
+                                            src: url,
+                                            img: "",
+                                            c: ["rgba(200,170,230,.55)", "rgba(160,180,230,.5)", "rgba(220,170,200,.45)", "rgba(180,160,220,.4)"],
+                                            w: "rgba(140,120,180,.45)",
+                                            vocab: [],
+                                            l: []
+                                          };
+                                          tracks.push(tr);
+                                          newTracks.push(tr);
+                                          added++;
+                                        });
+                                        ghLoaded = true;
+                                        ghLoading = false;
+                                        if (added > 0) toast("Đã thêm " + added + " bài từ GitHub – đang đọc metadata…");
+                                        renderHome(1);
+                                        // Đọc ID3 (tên, nghệ sĩ, ảnh bìa) cho từng bài mới
+                                        newTracks.forEach(function (tr) {
+                                          enhanceTrackFromMp3(tr, tr.src);
+                                        });
+                                        if (cb) cb();
+                                      })
+                                      .catch(function (err) {
+                                        console.error(err);
+                                        ghLoading = false;
+                                        toast("Không tải được danh sách từ GitHub – kiểm tra mạng");
+                                        renderHome(1);
+                                        if (cb) cb();
+                                      });
+                                  }
+
+                                  var $ = function (id) { return document.getElementById(id); };
+                                  var audio = $("audio");
+                                  var ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 7V17Q8 19 9.69 17.93L17.31 13.07Q19 12 17.31 10.93L9.69 6.07Q8 5 8 7Z"/></svg>';
+                                  var ICON_PAUSE = '<svg viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>';
+
+                                  function fmt(s) {
+                                    s = Math.max(0, Math.floor(s));
+                                    return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+                                  }
+                                  function esc(s) {
+                                    return String(s).replace(/[&<>"]/g, function (c) {
+                                      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+                                    });
+                                  }
+                                  // Bỏ thanh điệu pinyin để tìm kiếm: dōng → dong, etc.
+                                  function stripTones(s) {
+                                    return String(s)
+                                      .normalize("NFD")
+                                      .replace(/[\u0300-\u036f]/g, "")
+                                      .replace(/[āáǎà]/g, "a").replace(/[ēéěè]/g, "e")
+                                      .replace(/[īíǐì]/g, "i").replace(/[ōóǒò]/g, "o")
+                                      .replace(/[ūúǔùǖǘǚǜ]/g, "u").replace(/[ńňǹ]/g, "n")
+                                      .toLowerCase();
+                                  }
+                                  function pop(el, c) {
+                                    el.classList.remove(c);
+                                    void el.offsetWidth;
+                                    el.classList.add(c);
+                                  }
+                                  function toast(m) {
+                                    var e = $("toast");
+                                    e.textContent = m;
+                                    e.classList.add("on");
+                                    clearTimeout(tt);
+                                    tt = setTimeout(function () { e.classList.remove("on"); }, 1600);
+                                  }
+                                  function openPlayer() { $("app").classList.add("show"); syncChrome(); }
+                                  function closePlayer() { $("app").classList.remove("show"); syncChrome(); }
+
+                                  function paint(smooth) {
+                                    var tr = tracks[i];
+                                    var dur = (useAudio && audio.duration && isFinite(audio.duration) ? audio.duration : tr.d);
+                                    var p = dur > 0 ? (pos / dur) * 100 : 0;
+                                    p = Math.min(100, Math.max(0, p));
+                                    $("fill").style.width = p + "%";
+                                    $("knob").style.left = p + "%";
+                                    $("mF").style.width = p + "%";
+                                    $("cur").textContent = fmt(pos);
+                                    if (!useAudio || !audio.duration) $("dur").textContent = fmt(tr.d);
+                                  }
+
+                                  function syncLike() {
+                                    $("like").classList.toggle("liked", S.f.indexOf(i) >= 0);
+                                  }
+                                  function syncBadge() {
+                                    /* icon-only: không hiện chữ */
+                                  }
+
+                                  // Lấy màu chủ đạo từ ảnh bìa -> màu nền cùng tông với ảnh
+                                  var themeCache = {};
+                                  // Ảnh chặn CORS thì không đọc được màu. Khi đó thử lại qua proxy ảnh công khai (wsrv.nl).
+                                  // Đặt false nếu không muốn gửi URL ảnh bìa ra dịch vụ ngoài.
+                                  var USE_CORS_PROXY = true;
+
+                                  function rgbToHsl(r, g, b) {
+                                    r /= 255; g /= 255; b /= 255;
+                                    var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+                                    var l = (mx + mn) / 2, d = mx - mn, h = 0, s = 0;
+                                    if (d > 0) {
+                                      s = d / (1 - Math.abs(2 * l - 1));
+                                      if (mx === r) h = ((g - b) / d) % 6;
+                                      else if (mx === g) h = (b - r) / d + 2;
+                                      else h = (r - g) / d + 4;
+                                      h *= 60;
+                                      if (h < 0) h += 360;
+                                    }
+                                    return [h, s, l];
+                                  }
+                                  function hslToRgb(h, s, l) {
+                                    var C = (1 - Math.abs(2 * l - 1)) * s;
+                                    var X = C * (1 - Math.abs((h / 60) % 2 - 1));
+                                    var m = l - C / 2, r, g, b;
+                                    if (h < 60) { r = C; g = X; b = 0; }
+                                    else if (h < 120) { r = X; g = C; b = 0; }
+                                    else if (h < 180) { r = 0; g = C; b = X; }
+                                    else if (h < 240) { r = 0; g = X; b = C; }
+                                    else if (h < 300) { r = X; g = 0; b = C; }
+                                    else { r = C; g = 0; b = X; }
+                                    return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+                                  }
+                                  /* PALETTE-START */
+                                  // ===== Bảng màu từ ảnh bìa =====
+                                  function clamp(x, a, b) { return Math.min(b, Math.max(a, x)); }
+                                  function hueDiff(a, b) { return ((b - a + 540) % 360) - 180; } // lệch hue có dấu, đi đường ngắn nhất
+                                  function toRgb(h, s, l) {
+                                    return hslToRgb(((h % 360) + 360) % 360, clamp(s, 0, 1), clamp(l, 0, 1)).join(",");
+                                  }
+                                  function parseRgb(str) {
+                                    var m = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(str || "");
+                                    return m ? [+m[1], +m[2], +m[3]] : null;
+                                  }
+
+                                  // Từ điểm ảnh (N×N) lấy: màu chủ đạo, màu phụ, màu vùng đầu ảnh và vùng đáy ảnh
+                                  function paletteFromPixels(d, N) {
+                                    var BINS = 24, bins = [], k, j, row, col, p;
+                                    for (k = 0; k < BINS; k++) bins.push({ w: 0, r: 0, g: 0, b: 0 });
+                                    var T = [0, 0, 0, 0], E = [0, 0, 0, 0], A = [0, 0, 0, 0];
+                                    for (row = 0; row < N; row++) {
+                                      for (col = 0; col < N; col++) {
+                                        p = (row * N + col) * 4;
+                                        if (d[p + 3] < 128) continue;
+                                        var r = d[p], g = d[p + 1], b = d[p + 2];
+                                        var hsl = rgbToHsl(r, g, b);
+                                        A[0] += r; A[1] += g; A[2] += b; A[3]++;
+                                        if (row < N * .3) { T[0] += r; T[1] += g; T[2] += b; T[3]++; }
+                                        else if (row >= N * .6) { E[0] += r; E[1] += g; E[2] += b; E[3]++; }
+                                        var w = hsl[1] * (1 - Math.abs(2 * hsl[2] - 1)); // bỏ qua điểm gần đen/trắng/xám
+                                        w *= w;
+                                        if (w < .0005) continue;
+                                        var bk = bins[Math.floor(hsl[0] / 360 * BINS) % BINS];
+                                        bk.w += w; bk.r += r * w; bk.g += g * w; bk.b += b * w;
+                                      }
+                                    }
+                                    if (!A[3]) throw new Error("empty");
+                                    function avg(S) {
+                                      var q = S[3] ? S : A, n = q[3];
+                                      return rgbToHsl(q[0] / n, q[1] / n, q[2] / n);
+                                    }
+                                    function win(k) {
+                                      var W = 0, t;
+                                      for (t = -1; t <= 1; t++) W += bins[(k + t + BINS) % BINS].w;
+                                      return W;
+                                    }
+                                    function winHsl(k) {
+                                      var W = 0, R = 0, G = 0, B = 0, t, q;
+                                      for (t = -1; t <= 1; t++) {
+                                        q = bins[(k + t + BINS) % BINS];
+                                        W += q.w; R += q.r; G += q.g; B += q.b;
+                                      }
+                                      return rgbToHsl(R / W, G / W, B / W);
+                                    }
+                                    var best = -1, bw = 0, W;
+                                    for (k = 0; k < BINS; k++) {
+                                      W = win(k);
+                                      if (W > bw) { bw = W; best = k; }
+                                    }
+                                    var out = { top: avg(T), edge: avg(E), gray: false, light: false, h2: null, s2: null };
+                                    if (best < 0 || bw < A[3] * .004) {
+                                      // ảnh gần như đen-trắng: giữ nền trung tính
+                                      var all = avg(A);
+                                      out.gray = true; out.h1 = all[0]; out.s1 = Math.min(all[1], .08);
+                                      return out;
+                                    }
+                                    var p1 = winHsl(best);
+                                    out.h1 = p1[0]; out.s1 = p1[1];
+                                    // màu phụ: cụm màu mạnh nhất cách màu chủ đạo ít nhất 45°
+                                    var second = -1, sw = 0;
+                                    for (k = 0; k < BINS; k++) {
+                                      if (Math.abs(hueDiff(p1[0], (k + .5) * 360 / BINS)) < 45) continue;
+                                      W = win(k);
+                                      if (W > sw) { sw = W; second = k; }
+                                    }
+                                    if (second >= 0 && sw >= bw * .3) {
+                                      var p2 = winHsl(second);
+                                      out.h2 = p2[0]; out.s2 = p2[1];
+                                    }
+                                    return out;
+                                  }
+
+                                  // Từ bảng màu → bộ màu nền. Mọi màu cùng họ hue với ảnh nên chuyển màu luôn sạch, không bị xám đục.
+                                  function buildTheme(p) {
+                                    var gray = p.gray, h1 = p.h1;
+                                    var s1 = gray ? Math.min(p.s1, .08) : clamp(p.s1, .5, .9);
+
+                                    // màu phụ: dùng màu thật của ảnh nếu hài hoà, không thì lệch hue nhẹ cho nền có chiều sâu
+                                    var h2 = h1, s2 = s1;
+                                    if (!gray) {
+                                      var df = p.h2 == null ? 0 : hueDiff(h1, p.h2);
+                                      if (p.h2 != null && Math.abs(df) >= 30 && Math.abs(df) <= 95) {
+                                        h2 = p.h2; s2 = clamp(p.s2, .45, .85);
+                                      } else {
+                                        h2 = h1 + (df < 0 ? -28 : 28);
+                                      }
+                                    }
+
+                                    var t = p.top, e = p.edge;
+                                    var dark = !p.light && t[2] < .52; // đầu ảnh tối → nền đầu tối + icon sáng
+                                    var tl = p.light ? .8 : (dark ? clamp(t[2], .24, .42) : clamp(t[2], .72, .86));
+                                    var el = clamp(e[2] * .85, .1, .5); // đáy ảnh → hoà dần vào nền tối
+                                    var th = (gray || t[1] < .12) ? h1 : h1 + clamp(hueDiff(h1, t[0]), -50, 50);
+                                    var eh = (gray || e[1] < .12) ? h1 : h1 + clamp(hueDiff(h1, e[0]), -45, 45);
+                                    var ts = gray ? Math.min(t[1], .08) : clamp(Math.max(t[1], s1 * .7), .35, .8);
+                                    var es = gray ? Math.min(e[1], .08) : clamp(Math.max(e[1], s1 * .6), .3, .8);
+                                    // Vùng từ tên bài xuống: nền TỐI cùng tông với đáy ảnh (chữ sáng)
+                                    var bh = e[1] < .1 ? h1 : e[0];
+                                    var bs = clamp(e[1] * .9, 0, .65);
+                                    var bl = clamp(.12 + e[2] * .35, .14, .36);
+                                    var ml = (el + bl) / 2;
+
+                                    return {
+                                      top: toRgb(th, ts, tl),                                   // đầu nền
+                                      edge: toRgb(eh, es, el),                                  // nối với mép dưới ảnh bìa
+                                      mid: toRgb(bh, bs, ml),
+                                      light: toRgb(bh, bs, bl),                                   // vùng chữ & nút
+                                      g1: toRgb(bh, bs, bl + .08),
+                                      g2: toRgb(bh, bs, bl + .06),
+                                      dark: dark
+                                    };
+                                  }
+
+                                  // Bài chưa có ảnh (hoặc không đọc được ảnh): dựng màu từ c / w khai báo trong tracks
+                                  function fallbackTheme(tr) {
+                                    var a = parseRgb(tr.w) || parseRgb(tr.c && tr.c[0]) || [200, 195, 215];
+                                    var b = parseRgb(tr.c && tr.c[1]) || a;
+                                    var ha = rgbToHsl(a[0], a[1], a[2]), hb = rgbToHsl(b[0], b[1], b[2]);
+                                    var gray = ha[1] < .1;
+                                    return buildTheme({
+                                      h1: ha[0], s1: ha[1], h2: gray ? null : hb[0], s2: hb[1],
+                                      top: [ha[0], ha[1], .8], edge: [ha[0], ha[1], .78], gray: gray, light: true
+                                    });
+                                  }
+                                  /* PALETTE-END */
+
+                                  var chromeTop = "", chromeBot = "";
+                                  function applyTheme(t) {
+                                    var np = $("np"), st = np.style;
+                                    st.setProperty("--bg-top", t.top);
+                                    st.setProperty("--bg-edge", t.edge);
+                                    st.setProperty("--bg-mid", t.mid);
+                                    st.setProperty("--tint-rgb", t.light);
+                                    st.setProperty("--glow1", t.g1);
+                                    st.setProperty("--glow2", t.g2);
+                                    np.setAttribute("data-top", t.dark ? "dark" : "light");
+                                    chromeTop = t.top;
+                                    chromeBot = t.light;
+                                    syncChrome();
+                                  }
+                                  // Thanh trạng thái / thanh địa chỉ của trình duyệt cùng màu với đầu nền khi đang mở trình phát
+                                  function syncChrome() {
+                                    var on = $("app").classList.contains("show") && chromeTop;
+                                    var col = on ? "rgb(" + chromeTop + ")" : "";
+                                    var m = document.querySelector('meta[name="theme-color"]');
+                                    if (m) m.setAttribute("content", on ? col : "#f2f2f7");
+                                    document.documentElement.style.background = on
+                                      ? "linear-gradient(180deg, rgb(" + chromeTop + ") 50%, rgb(" + chromeBot + ") 50%)" : "";
+                                    document.body.style.backgroundColor = col;
+                                  }
+
+                                  function themeFromImage(url, fallback) {
+                                    if (themeCache[url]) { applyTheme(themeCache[url]); return; }
+                                    applyTheme(fallback);
+                                    function done(t) {
+                                      themeCache[url] = t;
+                                      if (tracks[i] && tracks[i].img === url) applyTheme(t);
+                                    }
+                                    function sample(src, retry) {
+                                      var im = new Image();
+                                      im.crossOrigin = "anonymous";
+                                      im.onload = function () {
+                                        try {
+                                          var N = 40, c = document.createElement("canvas");
+                                          c.width = c.height = N;
+                                          var x = c.getContext("2d", { willReadFrequently: true });
+                                          x.drawImage(im, 0, 0, N, N);
+                                          // getImageData ném lỗi nếu ảnh bị chặn CORS → thử lại qua proxy
+                                          done(buildTheme(paletteFromPixels(x.getImageData(0, 0, N, N).data, N)));
+                                        } catch (e) { if (retry) retry(); }
+                                      };
+                                      im.onerror = function () { if (retry) retry(); };
+                                      im.src = src;
+                                    }
+                                    var viaProxy = null;
+                                    if (USE_CORS_PROXY && /^https?:/i.test(url)) {
+                                      viaProxy = function () {
+                                        sample("https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=64&h=64&fit=cover&output=jpg");
+                                      };
+                                    }
+                                    sample(url, viaProxy);
+                                  }
+
+                                  function setCover(tr) {
+                                    var inner = $("coverInner");
+                                    var fallback = $("coverFallback");
+                                    var fb = fallbackTheme(tr);
+                                    if (tr.img) {
+                                      inner.style.backgroundImage = 'url("' + tr.img + '")';
+                                      inner.style.opacity = "1";
+                                      $("bgSpin").style.backgroundImage = 'url("' + tr.img + '")';
+                                      $("bgSpin").style.opacity = ".92";
+                                      themeFromImage(tr.img, fb);
+                                    } else {
+                                      inner.style.backgroundImage = "none";
+                                      inner.style.opacity = "0";
+                                      $("bgSpin").style.opacity = "0";
+                                      applyTheme(fb);
+                                    }
+                                    var cv = fallback.style;
+                                    cv.setProperty("--c1", tr.c[0]);
+                                    cv.setProperty("--c2", tr.c[1]);
+                                    cv.setProperty("--c3", tr.c[2]);
+                                    cv.setProperty("--c4", tr.c[3]);
+                                    cv.setProperty("--wash", tr.w);
+                                  }
+
+                                  function updMini() {
+                                    var tr = tracks[i];
+                                    $("mT").textContent = tr.t;
+                                    $("mA").textContent = tr.a;
+                                    var mc = $("mc");
+                                    if (tr.img) {
+                                      mc.src = tr.img;
+                                      mc.style.background = "";
+                                    } else {
+                                      mc.removeAttribute("src");
+                                      mc.style.background = "linear-gradient(135deg," + tr.c[0] + "," + tr.w + "), var(--surface2)";
+                                    }
+                                    $("mPlay").innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+                                    syncMediaSession();
+                                  }
+
+                                  // Media Session: cho hệ điều hành biết đang phát bài gì, để hiện trên màn hình khoá /
+                                  // trung tâm điều khiển và cho phép điều khiển từ đó. Chủ yếu có tác dụng với bài
+                                  // phát qua thẻ <audio> (mp3 trong thư viện / GitHub).
+                                  function syncMediaSession() {
+                                    if (!("mediaSession" in navigator)) return;
+                                    var tr = tracks[i];
+                                    try {
+                                      navigator.mediaSession.metadata = new MediaMetadata({
+                                        title: tr.t,
+                                        artist: tr.a,
+                                        artwork: tr.img ? [{ src: tr.img, sizes: "512x512", type: "image/jpeg" }] : []
+                                      });
+                                    } catch (e) {}
+                                  }
+                                  function syncMediaSessionState() {
+                                    if (!("mediaSession" in navigator)) return;
+                                    try { navigator.mediaSession.playbackState = playing ? "playing" : "paused"; } catch (e) {}
+                                  }
+
+                                  function stopRaf() {
+                                    if (raf) {
+                                      cancelAnimationFrame(raf);
+                                      raf = null;
+                                    }
+                                  }
+
+                                  function startSmoothPaint() {
+                                    stopRaf();
+                                    function tick() {
+                                      if (!playing) return;
+                                      if (useAudio) {
+                                        pos = audio.currentTime || 0;
+                                      }
+                                      paint();
+                                      raf = requestAnimationFrame(tick);
+                                    }
+                                    raf = requestAnimationFrame(tick);
+                                  }
+
+                                  function load(n, dir) {
+                                    i = (n + tracks.length) % tracks.length;
+                                    pos = 0;
+                                    var tr = tracks[i];
+                                    srcTry = srcList(tr);
+                                    srcIdx = 0;
+                                    useAudio = srcTry.length > 0;
+
+                                    setCover(tr);
+                                    $("title").textContent = tr.t;
+                                    $("artist").textContent = tr.a;
+                                    $("dur").textContent = fmt(tr.d);
+                                    document.title = tr.t + " – " + tr.a;
+
+                                    if (useAudio) {
+                                      loadSrc(0);
+                                      audio.onloadedmetadata = function () {
+                                        if (isFinite(audio.duration)) {
+                                          $("dur").textContent = fmt(audio.duration);
+                                          tracks[i].d = Math.round(audio.duration);
+                                        }
+                                      };
+                                    } else {
+                                      audio.removeAttribute("src");
+                                      audio.load();
+                                    }
+
+                                    if (dir) {
+                                      var c = dir > 0 ? "nx" : "pv";
+                                      pop($("title"), c);
+                                      pop($("artist"), c);
+                                      pop($("cover"), "cv");
+                                    }
+                                    syncLike();
+                                    syncBadge();
+                                    updMini();
+                                    renderHome(1);
+                                    if (mode === "q") render(1);
+                                    if (mode === "v") render(1);
+                                    paint();
+                                  }
+
+                                  function setPlaying(v, first) {
+                                    playing = v;
+                                    $("play").innerHTML = v ? ICON_PAUSE : ICON_PLAY;
+                                    if ($("play").firstElementChild) pop($("play").firstElementChild, "icn");
+                                    updMini();
+                                    syncMediaSessionState();
+                                    var st = $("status");
+                                    function apply() {
+                                      $("stxt").textContent = v ? "Playing" : "Pause";
+                                      st.classList.toggle("off", !v);
+                                      st.classList.remove("fd");
+                                    }
+                                    if (first) apply();
+                                    else {
+                                      st.classList.add("fd");
+                                      setTimeout(apply, 180);
+                                    }
+
+                                    clearInterval(timer);
+                                    stopRaf();
+
+                                    if (v) {
+                                      if (useAudio) {
+                                        if (audio.error) loadSrc(0); // lần trước lỗi → thử tải lại từ đầu
+                                        if (pos > 0) setT(pos);
+                                        var p = audio.play();
+                                        if (p && p.catch) p.catch(function (err) {
+                                          // AbortError = play() bị ngắt do đổi bài/đổi nguồn → bình thường, bỏ qua
+                                          if (err && err.name === "AbortError") return;
+                                          if (err && err.name === "NotAllowedError") toast("Trình duyệt chặn phát – hãy bấm Play lần nữa");
+                                          else toast("Không phát được nhạc – kiểm tra link/file");
+                                          setPlaying(false, true);
+                                        });
+                                        startSmoothPaint();
+                                      } else {
+                                        // Demo timer – update every frame for smooth bar
+                                        var last = performance.now();
+                                        function tick(now) {
+                                          if (!playing) return;
+                                          var dt = (now - last) / 1000;
+                                          last = now;
+                                          pos += dt;
+                                          if (pos >= tracks[i].d) {
+                                            step(1);
+                                            return;
+                                          }
+                                          paint();
+                                          raf = requestAnimationFrame(tick);
+                                        }
+                                        raf = requestAnimationFrame(tick);
+                                      }
+                                    } else {
+                                      if (useAudio) audio.pause();
+                                    }
+                                  }
+
+                                  function step(dir) {
+                                    var n = i + dir;
+                                    if (shuffle && dir > 0 && tracks.length > 1) {
+                                      do { n = Math.floor(Math.random() * tracks.length); } while (n === i);
+                                    }
+                                    var wasPlaying = playing;
+                                    setPlaying(false);
+                                    load(n, dir);
+                                    if (wasPlaying) setPlaying(true);
+                                  }
+
+                                  function playTrack(k) {
+                                    if (k !== i) {
+                                      setPlaying(false);
+                                      load(k, k > i ? 1 : -1);
+                                    }
+                                    setPlaying(true);
+                                    openPlayer();
+                                  }
+
+                                  function jumpV(k) {
+                                    var v = S.v[k];
+                                    if (!v) return;
+                                    if (v.t !== i) {
+                                      setPlaying(false);
+                                      load(v.t, 1);
+                                    }
+                                    pos = v.p;
+                                    if (useAudio) setT(pos);
+                                    paint();
+                                    setPlaying(true);
+                                    openPlayer();
+                                    close();
+                                  }
+
+                                  // Audio events
+                                  audio.addEventListener("ended", function () { step(1); });
+                                  audio.addEventListener("timeupdate", function () {
+                                    if (useAudio && playing) pos = audio.currentTime;
+                                  });
+                                  audio.addEventListener("error", function () {
+                                    if (!useAudio || !srcTry.length) return;
+                                    if (srcIdx + 1 < srcTry.length) {
+                                      // nguồn hiện tại lỗi → thử link dự phòng tiếp theo
+                                      loadSrc(srcIdx + 1);
+                                      if (playing) {
+                                        var p = audio.play();
+                                        if (p && p.catch) p.catch(function () {});
+                                      }
+                                      return;
+                                    }
+                                    var code = audio.error ? audio.error.code : "?";
+                                    toast("Không tải được nhạc (lỗi " + code + ") – kiểm tra link/file mp3");
+                                    if (playing) setPlaying(false, true);
+                                  });
+
+                                  // ========== HOME ==========
+                                  function rowT(k, n) {
+                                    var tr = tracks[k];
+                                    var coverHtml = tr.img
+                                      ? '<img class="row-cover" src="' + esc(tr.img) + '" alt="" />'
+                                      : '<div class="row-cover" style="background:linear-gradient(135deg,' + tr.c[0] + ',' + tr.w + ')"></div>';
+                                    return (
+                                      '<div class="row' + (k === i ? " cur" : "") + '" data-a="hplay" data-k="' + k + '" style="--k:' + n + '">' +
+                                      coverHtml +
+                                      '<div class="row-info"><b>' + esc(tr.t) + '</b><small>' + esc(tr.a) + '</small></div>' +
+                                      '<span class="row-dur">' + fmt(tr.d) + '</span></div>'
+                                    );
+                                  }
+
+                                  function rowV(x, n) {
+                                    var v = x[0];
+                                    return (
+                                      '<div class="row" data-a="hjump" data-k="' + x[1] + '" style="--k:' + n + '">' +
+                                      '<div class="row-info"><b>' + esc(v.w) + '</b><small>' + esc(v.m || "—") + '</small></div>' +
+                                      '<span class="row-dur">' + esc(tracks[v.t].t) + ' · ' + fmt(v.p) + '</span></div>'
+                                    );
+                                  }
+
+                                  function sec(t, c) {
+                                    return '<div class="sh">' + t + ' <small>' + c + '</small></div>';
+                                  }
+
+                                  function renderHome(na) {
+                                    var B = $("hbody"), h = "", q = hq.trim().toLowerCase();
+                                    var all = tracks.map(function (_, k) { return k; });
+                                    B.classList.toggle("na", !!na);
+
+                                    if (hm === "m" && !q) {
+                                      h =
+                                        '<div class="empty vocab-hint">' +
+                                        '<div class="vocab-hint-ico">♪</div>' +
+                                        "<b>Tìm nhạc</b>" +
+                                        "Nhập tên bài hát, nghệ sĩ hoặc pinyin<br>để tìm bài muốn nghe.<br><small>File mp3 từ GitHub sẽ tự động được tải vào thư viện.</small>" +
+                                        "</div>";
+                                    } else if (hm === "m") {
+                                      var qn = stripTones(q);
+                                      var r = all.filter(function (k) {
+                                        var tr = tracks[k];
+                                        var hay = stripTones(tr.t + " " + tr.a + " " + (tr.py || ""));
+                                        return hay.indexOf(qn) >= 0;
+                                      });
+                                      if (ghLoading) {
+                                        h = '<div class="empty">Đang tải danh sách từ GitHub…</div>';
+                                      } else {
+                                        h = r.length
+                                          ? sec("Kết quả", r.length) + r.map(rowT).join("")
+                                          : '<div class="empty">Không tìm thấy bài nào<br><small>Thử tên khác hoặc kiểm tra repo GitHub</small></div>';
+                                      }
+                                    } else if (hm === "w") {
+                                      /* Tìm từ vựng trong tất cả bài: Trung / pinyin không thanh → hiện nghĩa + pinyin có thanh */
+                                      var qn = stripTones(q);
+                                      var found = [];
+                                      var seen = {};
+                                      tracks.forEach(function (tr, ti) {
+                                        (tr.vocab || []).forEach(function (v) {
+                                          var key = v.zh + "|" + v.py;
+                                          if (seen[key]) return;
+                                          var hay = stripTones(v.zh + " " + (v.py || "") + " " + (v.vi || ""));
+                                          if (!qn || hay.indexOf(qn) >= 0) {
+                                            seen[key] = 1;
+                                            found.push({ v: v, song: tr.t, ti: ti });
+                                          }
+                                        });
+                                      });
+                                      if (q) {
+                                        h =
+                                          sec("Kết quả", found.length) +
+                                          (found.length
+                                            ? '<div class="vlist home-vlist"><div class="vhead"><span>Trung</span><span>Pinyin</span><span>Việt</span></div>' +
+                                              found
+                                                .slice(0, 80)
+                                                .map(function (x, n) {
+                                                  return (
+                                                    '<div class="vitem" style="--k:' +
+                                                    n +
+                                                    '"><span class="zh">' +
+                                                    esc(x.v.zh) +
+                                                    '</span><span class="py">' +
+                                                    esc(x.v.py) +
+                                                    '</span><span class="vi">' +
+                                                    esc(x.v.vi) +
+                                                    "</span></div>"
+                                                  );
+                                                })
+                                                .join("") +
+                                              "</div>"
+                                            : '<div class="empty">Không tìm thấy từ nào<br><small>Thử chữ Hán hoặc pinyin không thanh (vd: dong mian)</small></div>');
+                                      } else {
+                                        h =
+                                          '<div class="empty vocab-hint">' +
+                                          '<div class="vocab-hint-ico">字</div>' +
+                                          "<b>Tra từ vựng</b><br>" +
+                                          "Nhập chữ Hán hoặc pinyin <em>không thanh</em><br>" +
+                                          "để xem nghĩa và cách phát âm có thanh." +
+                                          "</div>";
+                                      }
+                                    } else {
+                                      h =
+                                        sec("Playlist của tôi", S.p.length) +
+                                        '<div class="cards">' +
+                                        S.p
+                                          .map(function (p, k) {
+                                            var t = tracks[p.s[0]];
+                                            var g = t ? "linear-gradient(150deg," + t.c[0] + "," + t.w + ")" : "linear-gradient(150deg,#c7c7cc,#8e8e93)";
+                                            var bg = t && t.img ? "url('" + esc(t.img).replace(/'/g, "%27") + "') center/cover no-repeat, " + g : g;
+                                            return (
+                                              '<div class="pc-wrap">' +
+                                              '<button class="pc" data-a="hpl" data-k="p' +
+                                              k +
+                                              '" style="background:' + bg + '"><b>' +
+                                              esc(p.n) +
+                                              "</b><small>" +
+                                              p.s.length +
+                                              " bài</small></button>" +
+                                              '<button class="pc-del" data-a="hdelpl" data-k="' +
+                                              k +
+                                              '" aria-label="Xoá playlist" title="Xoá">×</button>' +
+                                              "</div>"
+                                            );
+                                          })
+                                          .join("") +
+                                        '<button class="pc new" data-a="hnew"><b>＋</b><small>Playlist mới</small></button></div>';
+
+                                      if (creating) {
+                                        h +=
+                                          '<div class="add"><input id="hpn" maxlength="30" placeholder="Tên playlist mới"><button data-a="hcreate">Tạo</button></div>';
+                                      }
+
+                                      if (!S.p.length && !creating) {
+                                        h +=
+                                          '<div class="empty" style="padding-top:8px">Chưa có playlist.<br>Bấm ＋ để tạo playlist mới.</div>';
+                                      }
+
+                                      h +=
+                                        sec("Yêu thích", S.f.length) +
+                                        (S.f.length
+                                          ? S.f.map(rowT).join("")
+                                          : '<div class="empty">Bấm ♥ ở trình phát để lưu bài yêu thích</div>');
+
+                                    }
+                                    B.innerHTML = h;
+                                  }
+
+                                  $("hbody").onclick = function (e) {
+                                    var b = e.target.closest("[data-a]");
+                                    if (!b) return;
+                                    var a = b.dataset.a, k = b.dataset.k;
+                                    if (a === "hplay") playTrack(+k);
+                                    else if (a === "hpl") open("q", k);
+                                    else if (a === "hnew") {
+                                      creating = !creating;
+                                      renderHome(1);
+                                      if (creating) $("hpn") && $("hpn").focus();
+                                    } else if (a === "hcreate") homeCreate();
+                                    else if (a === "hdelpl") {
+                                      var idx = +k;
+                                      if (idx < 0 || idx >= S.p.length) return;
+                                      var name = S.p[idx].n;
+                                      if (!confirm('Xoá playlist “' + name + '”?')) return;
+                                      S.p.splice(idx, 1);
+                                      save();
+                                      toast("Đã xoá playlist “" + name + "”");
+                                    } else if (a === "hjump") jumpV(+k);
+                                    else if (a === "hsave") homeSaveWord();
+                                  };
+
+                                  $("hbody").addEventListener("keydown", function (e) {
+                                    if (e.key !== "Enter") return;
+                                    if (e.target.id === "hpn") homeCreate();
+                                    else if (e.target.id === "hmean") homeSaveWord();
+                                  });
+
+                                  function homeCreate() {
+                                    var v = $("hpn").value.trim();
+                                    if (!v) return;
+                                    S.p.push({ n: v, s: [] });
+                                    creating = false;
+                                    save();
+                                    toast("Đã tạo playlist “" + v + "”");
+                                  }
+
+                                  function homeSaveWord() {
+                                    var w = hq.trim();
+                                    if (!w) return;
+                                    S.v.unshift({ w: w, m: $("hmean").value.trim(), t: i, p: pos });
+                                    save();
+                                    syncBadge();
+                                    toast("Đã lưu từ vựng");
+                                  }
+
+                                  $("q").oninput = function () {
+                                    hq = this.value;
+                                    $("qc").hidden = !hq;
+                                    renderHome(1);
+                                  };
+                                  $("qc").onclick = function () {
+                                    hq = "";
+                                    $("q").value = "";
+                                    this.hidden = true;
+                                    renderHome();
+                                    $("q").focus();
+                                  };
+
+                                  document.querySelectorAll(".tab").forEach(function (b) {
+                                    b.onclick = function () {
+                                      hm = b.dataset.m;
+                                      hq = "";
+                                      creating = false;
+                                      $("q").value = "";
+                                      $("qc").hidden = true;
+                                      $("sbox").hidden = hm === "me";
+                                      $("tabs").setAttribute("data-p", b.dataset.p);
+                                      document.querySelectorAll(".tab").forEach(function (x) {
+                                        x.classList.toggle("on", x === b);
+                                      });
+                                      $("q").placeholder =
+                                        hm === "w" ? "Chữ Hán hoặc pinyin không thanh..." : "Tìm bài hát, nghệ sĩ, pinyin...";
+                                      if (hm === "m") loadGitHubFiles();
+                                      renderHome();
+                                      $("hbody").scrollTop = 0;
+                                    };
+                                  });
+
+                                  $("mini").onclick = openPlayer;
+                                  $("mPlay").onclick = function (e) {
+                                    e.stopPropagation();
+                                    setPlaying(!playing);
+                                  };
+                                  $("min").onclick = closePlayer;
+
+                                  // ========== SHEET ==========
+                                  function open(m, arg) {
+                                    mode = m;
+                                    if (m === "q") tab = arg || "all";
+                                    if (m === "v") {
+                                      vp = pos;
+                                      vi = i;
+                                      vt = "cur";
+                                    }
+                                    render();
+                                    $("sheet").classList.add("open");
+                                  }
+                                  function close() {
+                                    $("sheet").classList.remove("open");
+                                    mode = "";
+                                  }
+
+                                  function render(na) {
+                                    var P = $("pane"),
+                                      h = '<div class="grab"></div>',
+                                      tr = tracks[i];
+                                    P.classList.toggle("na", !!na);
+                                    P.classList.toggle("tall", mode === "ly" || mode === "v" || mode === "q");
+
+                                    if (mode === "q") {
+                                      var ch = [
+                                        ["all", "Tất cả"],
+                                        ["fav", "Yêu thích"]
+                                      ].concat(
+                                        S.p.map(function (p, k) {
+                                          return ["p" + k, p.n];
+                                        })
+                                      );
+                                      var ids =
+                                        tab === "all"
+                                          ? tracks.map(function (_, k) { return k; })
+                                          : tab === "fav"
+                                          ? S.f
+                                          : (S.p[+tab.slice(1)] || { s: [] }).s;
+                                      h +=
+                                        '<div class="hd">Danh sách phát</div><div class="chips">' +
+                                        ch
+                                          .map(function (c) {
+                                            return (
+                                              '<button class="chip' +
+                                              (c[0] === tab ? " on" : "") +
+                                              '" data-a="tab" data-k="' +
+                                              c[0] +
+                                              '">' +
+                                              esc(c[1]) +
+                                              "</button>"
+                                            );
+                                          })
+                                          .join("") +
+                                        '</div><div class="body">' +
+                                        (ids.length
+                                          ? ids
+                                              .map(function (k, n) {
+                                                var coverHtml = tracks[k].img
+                                                  ? '<img class="row-cover" src="' + esc(tracks[k].img) + '" alt="" />'
+                                                  : '<div class="row-cover" style="background:linear-gradient(135deg,' +
+                                                    tracks[k].c[0] +
+                                                    "," +
+                                                    tracks[k].w +
+                                                    ')"></div>';
+                                                return (
+                                                  '<div class="row' +
+                                                  (k === i ? " cur" : "") +
+                                                  '" data-a="play" data-k="' +
+                                                  k +
+                                                  '" style="--k:' +
+                                                  n +
+                                                  '">' +
+                                                  coverHtml +
+                                                  '<div class="row-info"><b>' +
+                                                  esc(tracks[k].t) + "</b><small>" + esc(tracks[k].a) +
+                                                  "</small></div>" +
+                                                  '<span class="row-dur">' +
+                                                  fmt(tracks[k].d) +
+                                                  "</span></div>"
+                                                );
+                                              })
+                                              .join("")
+                                          : '<div class="empty">Chưa có bài nào</div>') +
+                                        "</div>";
+                                    } else if (mode === "a") {
+                                      var rows = [
+                                        ["f", "Yêu thích", S.f.length, S.f.indexOf(i) >= 0]
+                                      ].concat(
+                                        S.p.map(function (p, k) {
+                                          return [k, p.n, p.s.length, p.s.indexOf(i) >= 0];
+                                        })
+                                      );
+                                      h +=
+                                        '<div class="hd">Thêm vào playlist <small>' +
+                                        esc(tr.t) +
+                                        '</small></div><div class="body">' +
+                                        rows
+                                          .map(function (x, n) {
+                                            return (
+                                              '<div class="row" data-a="tog" data-k="' +
+                                              x[0] +
+                                              '" style="--k:' +
+                                              n +
+                                              '"><div class="row-info"><b>' +
+                                              esc(x[1]) +
+                                              "</b><small>" +
+                                              x[2] +
+                                              ' bài</small></div><span class="ck' +
+                                              (x[3] ? " on" : "") +
+                                              '">' +
+                                              (x[3] ? "✓" : "") +
+                                              "</span></div>"
+                                            );
+                                          })
+                                          .join("") +
+                                        '<div class="add"><input id="npl" maxlength="30" placeholder="Tên playlist mới"><button data-a="newpl">Tạo</button></div></div>';
+                                    } else if (mode === "v") {
+                                      var list = tr.vocab || [];
+                                      h +=
+                                        '<div class="hd">Từ vựng bài này <small>' +
+                                        esc(tr.t) +
+                                        " · " +
+                                        list.length +
+                                        " từ</small></div>" +
+                                        '<div class="body">' +
+                                        (list.length
+                                          ? '<div class="vlist"><div class="vhead"><span>Trung</span><span>Pinyin</span><span>Việt</span></div>' +
+                                            list
+                                              .map(function (v, n) {
+                                                return (
+                                                  '<div class="vitem" style="--k:' +
+                                                  n +
+                                                  '"><span class="zh">' +
+                                                  esc(v.zh) +
+                                                  '</span><span class="py">' +
+                                                  esc(v.py) +
+                                                  '</span><span class="vi">' +
+                                                  esc(v.vi) +
+                                                  "</span></div>"
+                                                );
+                                              })
+                                              .join("") +
+                                            "</div>"
+                                          : '<div class="empty">Bài này chưa có từ vựng</div>') +
+                                        "</div>";
+                                    } else if (mode === "ly") {
+                                      var lyList = tr.l || [];
+                                      var lyHtml = lyList
+                                        .map(function (sec) {
+                                          var singer = sec.s
+                                            ? '<span class="singer">' + esc(sec.s) + "</span>\n"
+                                            : "";
+                                          return singer + sec.lines.map(esc).join("\n");
+                                        })
+                                        .join("\n\n");
+                                      h +=
+                                        '<div class="hd"><span>Lời bài hát <small>' +
+                                        esc(tr.t) +
+                                        "</small></span>" +
+                                        (lyList.length ? '<button class="chip" data-a="copy">Sao chép</button>' : "") +
+                                        "</div>" +
+                                        '<div class="body">' +
+                                        (lyList.length
+                                          ? '<div class="lytxt" id="lyt">' + lyHtml + "</div>"
+                                          : '<div class="empty">Bài này chưa có lời bài hát</div>') +
+                                        "</div>";
+                                    } else return;
+                                    var oc = mode === "q" && $("sheet").classList.contains("open") ? P.querySelector(".chips") : null;
+                                    var sl = oc ? oc.scrollLeft : 0;
+                                    P.innerHTML = h;
+                                    if (oc) { var nc = P.querySelector(".chips"); if (nc) nc.scrollLeft = sl; }
+                                  }
+
+                                  function copyLy() {
+                                    var tr = tracks[i];
+                                    var txt = tr.l
+                                      .map(function (sec) {
+                                        return (sec.s ? sec.s + "\n" : "") + sec.lines.join("\n");
+                                      })
+                                      .join("\n\n");
+                                    function fb() {
+                                      var r = document.createRange();
+                                      r.selectNodeContents($("lyt"));
+                                      var s = getSelection();
+                                      s.removeAllRanges();
+                                      s.addRange(r);
+                                      try { document.execCommand("copy"); } catch (e) {}
+                                      toast("Đã sao chép lời");
+                                    }
+                                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                                      navigator.clipboard.writeText(txt).then(function () {
+                                        toast("Đã sao chép lời");
+                                      }, fb);
+                                    } else fb();
+                                  }
+
+                                  function togList(k) {
+                                    if (k === "f") {
+                                      togFav();
+                                      render(1);
+                                      return;
+                                    }
+                                    var a = S.p[+k].s,
+                                      j = a.indexOf(i);
+                                    if (j < 0) {
+                                      a.push(i);
+                                      toast("Đã thêm vào “" + S.p[+k].n + "”");
+                                    } else {
+                                      a.splice(j, 1);
+                                      toast("Đã bỏ khỏi “" + S.p[+k].n + "”");
+                                    }
+                                    save();
+                                    render(1);
+                                  }
+
+                                  function togFav() {
+                                    var j = S.f.indexOf(i);
+                                    if (j < 0) {
+                                      S.f.push(i);
+                                      toast("Đã thêm vào Yêu thích");
+                                    } else {
+                                      S.f.splice(j, 1);
+                                      toast("Đã bỏ khỏi Yêu thích");
+                                    }
+                                    save();
+                                    syncLike();
+                                  }
+
+                                  function addVocab() {
+                                    var w = $("vw").value.trim(),
+                                      m = $("vm").value.trim();
+                                    if (!w) {
+                                      $("vw").focus();
+                                      return;
+                                    }
+                                    S.v.unshift({ w: w, m: m, t: vi, p: vp });
+                                    save();
+                                    syncBadge();
+                                    toast("Đã lưu từ vựng");
+                                    vp = pos;
+                                    vi = i;
+                                    render(1);
+                                    $("vw").focus();
+                                  }
+
+                                  function newPl() {
+                                    var v = $("npl").value.trim();
+                                    if (!v) return;
+                                    S.p.push({ n: v, s: [i] });
+                                    save();
+                                    toast("Đã tạo playlist “" + v + "”");
+                                    render(1);
+                                  }
+
+                                  $("pane").onclick = function (e) {
+                                    var b = e.target.closest("[data-a]");
+                                    if (!b) return;
+                                    var a = b.dataset.a,
+                                      k = b.dataset.k;
+                                    if (a === "tab") {
+                                      if (tab === k) return;
+                                      tab = k;
+                                      var body = $("pane").querySelector(".body");
+                                      if (body) {
+                                        body.classList.add("sw");
+                                        setTimeout(function () { render(); }, 160);
+                                      } else render();
+                                    } else if (a === "play") {
+                                      playTrack(+k);
+                                      close();
+                                    } else if (a === "tog") togList(k);
+                                    else if (a === "newpl") newPl();
+                                    else if (a === "vt") {
+                                      if (vt === k) return;
+                                      vt = k;
+                                      var body2 = $("pane").querySelector(".body");
+                                      if (body2) {
+                                        body2.classList.add("sw");
+                                        setTimeout(function () { render(); }, 160);
+                                      } else render();
+                                    } else if (a === "addv") addVocab();
+                                    else if (a === "delv") {
+                                      S.v.splice(+k, 1);
+                                      save();
+                                      syncBadge();
+                                      render(1);
+                                    } else if (a === "jump") jumpV(+k);
+                                    else if (a === "copy") copyLy();
+                                  };
+
+                                  $("pane").addEventListener("input", function (e) {
+                                    if (e.target.id === "vw" && e.target.value.length === 1) {
+                                      vp = pos;
+                                      vi = i;
+                                    }
+                                  });
+                                  $("pane").addEventListener("keydown", function (e) {
+                                    if (e.key !== "Enter") return;
+                                    if (e.target.id === "vw") $("vm").focus();
+                                    else if (e.target.id === "vm") addVocab();
+                                    else if (e.target.id === "npl") newPl();
+                                  });
+                                  $("sheet").onclick = function (e) {
+                                    if (e.target === this) close();
+                                  };
+
+                                  // ========== CONTROLS ==========
+                                  function seekTo(e) {
+                                    var r = $("seek").getBoundingClientRect();
+                                    var f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+                                    var tr = tracks[i];
+                                    var dur = (useAudio && audio.duration && isFinite(audio.duration) ? audio.duration : tr.d);
+                                    pos = f * dur;
+                                    if (useAudio) setT(pos);
+                                    paint();
+                                  }
+                                  var drag = false;
+                                  $("seek").addEventListener("pointerdown", function (e) {
+                                    drag = true;
+                                    this.setPointerCapture(e.pointerId);
+                                    seekTo(e);
+                                  });
+                                  $("seek").addEventListener("pointermove", function (e) {
+                                    if (drag) seekTo(e);
+                                  });
+                                  $("seek").addEventListener("pointerup", function () {
+                                    drag = false;
+                                  });
+
+                                  $("play").onclick = function () { setPlaying(!playing); };
+                                  $("prev").onclick = function () { step(-1); };
+                                  $("next").onclick = function () { step(1); };
+                                  $("shuffle").onclick = function () {
+                                    shuffle = !shuffle;
+                                    this.classList.toggle("on", shuffle);
+                                    toast(shuffle ? "Phát ngẫu nhiên: Bật" : "Phát ngẫu nhiên: Tắt");
+                                  };
+                                  $("like").onclick = togFav;
+                                  $("queue").onclick = function () { open("q"); };
+                                  $("bV").onclick = function () { open("v"); };
+                                  $("bA").onclick = function () { open("a"); };
+                                  $("bL").onclick = function () { open("ly"); };
+
+                                  $("share").onclick = function () {
+                                    var tr = tracks[i];
+                                    var text = tr.t + " – " + tr.a;
+                                    if (navigator.share) {
+                                      navigator.share({ title: text, text: text }).catch(function () {});
+                                    } else {
+                                      toast("Đã sao chép: " + text);
+                                      if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {});
+                                    }
+                                  };
+
+                                  // Media Session: cho phép điều khiển Play/Pause/Trước/Sau từ màn hình khoá,
+                                  // trung tâm điều khiển hoặc thông báo của hệ điều hành.
+                                  if ("mediaSession" in navigator) {
+                                    try {
+                                      navigator.mediaSession.setActionHandler("play", function () { setPlaying(true); });
+                                      navigator.mediaSession.setActionHandler("pause", function () { setPlaying(false); });
+                                      navigator.mediaSession.setActionHandler("previoustrack", function () { step(-1); });
+                                      navigator.mediaSession.setActionHandler("nexttrack", function () { step(1); });
+                                    } catch (e) {}
+                                  }
+
+                                  // Init
+                                  load(0);
+                                  pos = 0;
+                                  syncBadge();
+                                  paint();
+                                  setPlaying(false, true);
+                                  renderHome();
+                                  // Tự động tải danh sách mp3 từ GitHub khi mở app
+                                  loadGitHubFiles();
+        </script>
+    </body>
+</html>
